@@ -79,6 +79,8 @@ pub enum StartupStep {
     ChannelRosterFence,
     /// Repair large NIP-29 channel roster snapshots.
     LargeRosterReconcile,
+    /// Republish rosters whose `member`/`bot` roles disagree with the rows.
+    RoleRosterReconcile,
     /// Bind the private health listener.
     HealthBind,
     /// Bind the public relay listener.
@@ -106,6 +108,7 @@ impl StartupStep {
         Self::GitConformanceProbe,
         Self::ChannelRosterFence,
         Self::LargeRosterReconcile,
+        Self::RoleRosterReconcile,
         Self::HealthBind,
         Self::ListenerBind,
     ];
@@ -131,6 +134,7 @@ impl StartupStep {
             Self::GitConformanceProbe => "git_conformance_probe",
             Self::ChannelRosterFence => "channel_roster_fence",
             Self::LargeRosterReconcile => "large_roster_reconcile",
+            Self::RoleRosterReconcile => "role_roster_reconcile",
             Self::HealthBind => "health_bind",
             Self::ListenerBind => "listener_bind",
         }
