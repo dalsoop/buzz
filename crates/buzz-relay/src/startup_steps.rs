@@ -79,8 +79,6 @@ pub enum StartupStep {
     ChannelRosterFence,
     /// Repair large NIP-29 channel roster snapshots.
     LargeRosterReconcile,
-    /// Republish rosters whose `member`/`bot` roles disagree with the rows.
-    RoleRosterReconcile,
     /// Bind the private health listener.
     HealthBind,
     /// Bind the public relay listener.
@@ -108,7 +106,6 @@ impl StartupStep {
         Self::GitConformanceProbe,
         Self::ChannelRosterFence,
         Self::LargeRosterReconcile,
-        Self::RoleRosterReconcile,
         Self::HealthBind,
         Self::ListenerBind,
     ];
@@ -134,7 +131,6 @@ impl StartupStep {
             Self::GitConformanceProbe => "git_conformance_probe",
             Self::ChannelRosterFence => "channel_roster_fence",
             Self::LargeRosterReconcile => "large_roster_reconcile",
-            Self::RoleRosterReconcile => "role_roster_reconcile",
             Self::HealthBind => "health_bind",
             Self::ListenerBind => "listener_bind",
         }
@@ -406,5 +402,20 @@ mod tests {
                 phase.as_str()
             );
         }
+    }
+
+    #[test]
+    fn role_roster_reconcile_does_not_delay_the_listener() {
+        let main = include_str!("main.rs");
+        let call = "reconcile_ordinary_role_rosters(";
+        assert_eq!(main.matches(call).count(), 1);
+        let (before, _) = main.split_once(call).expect("startup reconciles rosters");
+        let spawn = before
+            .rfind("tokio::spawn(async move {")
+            .expect("the reconcile runs in a spawned task");
+        assert!(
+            !before[spawn..].contains(';'),
+            "the reconcile must be the spawned task's first statement"
+        );
     }
 }

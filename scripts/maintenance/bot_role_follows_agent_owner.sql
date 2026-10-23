@@ -11,8 +11,9 @@
 --      breaks the rule after this script ran.
 --   2. Run with psql, outside any BEGIN: psql -v ON_ERROR_STOP=1 -f <this file>
 --
--- After it finishes, restart the relays one at a time. Their startup step
--- republishes each kind:39002 roster whose roles now differ from the rows.
+-- After it finishes, restart the relays one at a time. At startup, each relay
+-- starts a background task that republishes each kind:39002 roster whose roles
+-- now differ from the rows.
 --
 -- How it runs: one key per transaction. Each transaction takes the shared
 -- community deletion lock, rereads the community state under that lock, and
