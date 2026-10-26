@@ -38,6 +38,7 @@ CREATE TABLE channels (
         CONSTRAINT channels_labels_bounded CHECK (cardinality(labels) <= 8),
     join_role       TEXT NOT NULL DEFAULT 'member'
         CHECK (join_role IN ('member', 'guest')),
+    auto_join       BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY (community_id, id),
     CONSTRAINT chk_channels_id_not_nil CHECK (id <> '00000000-0000-0000-0000-000000000000'::uuid)
 );

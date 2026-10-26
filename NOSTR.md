@@ -53,11 +53,11 @@ PGPASSWORD=buzz_dev psql -h localhost -U buzz -d buzz -c \
 | **Group creation (kind:9007)** | ✅ | NIP-29; include `name` tag, optional `visibility`, `channel_type` and label `t` tags |
 | **Add user (kind:9000)** | ✅ | Open: any user, subject to target's `channel_add_policy` (`owner_only`/`nobody` can block). Private: owner/admin only. Self-add bypasses agent policy but not private-channel auth. A guest cannot add anyone. A new member with no role tag gets the channel's `join_role`; a non-member adding themselves may ask for `join_role` or a lower role. |
 | **Remove user (kind:9001)** | ✅ | Self-remove allowed (with last-owner guard). Removing others: owner/admin only. |
-| **Edit group metadata (kind:9002)** | ✅ | `name`/`about`/label `t`/`visibility`/`ttl`/`archived`/`join_role` tags: owner/admin. `topic`/`purpose` tags: any member except a guest. Buzz applies 9002 as a partial update: an absent tag leaves that setting unchanged. |
+| **Edit group metadata (kind:9002)** | ✅ | `name`/`about`/label `t`/`visibility`/`ttl`/`archived`/`join_role` tags: owner/admin. `topic`/`purpose` tags: any member except a guest. `auto_join` tag: relay owner/admin (see [Default channels](#default-channels)). Buzz applies 9002 as a partial update: an absent tag leaves that setting unchanged. |
 | **Admin delete event (kind:9005)** | ✅ | Event author can always delete own. Otherwise owner/admin required. Target must be in same channel. |
 | **Group deletion (kind:9008)** | ✅ | Owner only. |
 | **Leave group (kind:9022)** | ✅ | Any member. Last-owner guard prevents orphaned groups. |
-| **Group metadata (kind:39000)** | ✅ | Relay-signed; always `d`, `name`, `t`, `P`, `created_at`, `join_role`; `public` or `private`; `restricted` and `closed` per the access flags below; `about` only if description non-empty; `hidden` for DM channels and private system channels |
+| **Group metadata (kind:39000)** | ✅ | Relay-signed; always `d`, `name`, `t`, `P`, `created_at`, `join_role`; `public` or `private`; `restricted` and `closed` per the access flags below; `about` only if description non-empty; `hidden` for DM channels and private system channels; `auto_join` while the channel is a default channel |
 | **Group admins (kind:39001)** | ✅ | Relay-signed; `d`, channel type `t` and creator `P` tags + `p` tags with roles (`owner`, `admin`) |
 | **Group members (kind:39002)** | ✅ | Relay-signed; `d`, channel type `t` and creator `P` tags + `p` tags for all members |
 | **Membership notifications** | ✅ | kind:44100 (added) / kind:44101 (removed); relay-signed, community-global scope (`channel_id=None` inside the connected community) |
@@ -155,6 +155,30 @@ explicit `["join_role", ...]` tag so clients can tell what joining gives:
 | open | `guest` | | ✓ | ✓ | |
 | private | either | ✓ | | ✓ | ✓ |
 
+### Default channels
+
+A community's owners and admins can mark a channel as a **default channel**:
+one the relay joins every new community member into. The setting is
+`auto_join` on the channel.
+
+- Only a *relay* owner or admin (the NIP-43 roster role, not a channel role)
+  can change it, with kind:9002 `["auto_join", "true"]` or
+  `["auto_join", "false"]`. The actor need not be a member of the channel.
+  A missing tag means "no change".
+- It is accepted only on an open, unarchived `stream` channel. The relay
+  decides that in the same transaction as the other kind:9002 changes, so one
+  event may open a channel and flag it. Making a flagged channel private or
+  archiving it is allowed and leaves the stored value in place.
+- kind:39000 carries a bare `["auto_join"]` tag only while the setting is
+  effective: set, open and unarchived. What the event says is what the relay
+  does, so a client never has to combine the flag with the access flags.
+- Nothing is a default channel until someone asks for it: new channels and
+  existing channels start with `auto_join` off. `buzz channels update
+  --channel <uuid> --auto-join true` sets it.
+
+Every change is announced by one kind:40099 `auto_join_changed` system
+message in the channel.
+
 ### Group Discovery
 
 The relay emits NIP-29 group state events when channels are created, updated, or membership changes.
@@ -164,7 +188,7 @@ All discovery events include a `d` tag set to the channel UUID (NIP-29 addressab
 
 | Kind | Tags | Content |
 |------|------|---------|
-| **39000** | `d=<uuid>`, `name`, `t=<channel_type>`, `P=<creator>`, `created_at=<unix seconds>`, `join_role` (always); `public` or `private`; `restricted` (private channels, and `join_role=guest`); `closed` (private channels only); `about` (if description non-empty); `hidden` (DM channels and private system channels) | Group metadata. The access flags follow the channel settings (see [Announce channels](#announce-channels)). |
+| **39000** | `d=<uuid>`, `name`, `t=<channel_type>`, `P=<creator>`, `created_at=<unix seconds>`, `join_role` (always); `public` or `private`; `restricted` (private channels, and `join_role=guest`); `closed` (private channels only); `about` (if description non-empty); `hidden` (DM channels and private system channels); `auto_join` (open, unarchived channels with the setting on, see [Default channels](#default-channels)) | Group metadata. The access flags follow the channel settings (see [Announce channels](#announce-channels)). |
 | **39001** | `d=<uuid>`, `t=<channel_type>`, `P=<creator>`, `p` tags with role label (`owner`, `admin`) | Admin list |
 | **39002** | `d=<uuid>`, `t=<channel_type>`, `P=<creator>`, `p` tags for all members | Member list |
 
