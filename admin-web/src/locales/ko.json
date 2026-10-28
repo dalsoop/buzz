@@ -1,0 +1,83 @@
+{
+  "language": {
+    "switchTo": "언어를 {{language}}(으)로 바꾸기",
+    "en": "English",
+    "ko": "한국어"
+  },
+  "nav": {
+    "admin": "관리자",
+    "reports": "신고",
+    "feedback": "피드백"
+  },
+  "state": {
+    "loading": "불러오는 중…",
+    "accessDenied": "접근 권한이 없어요",
+    "loadFailed": "데이터를 불러오지 못했어요",
+    "retry": "다시 시도",
+    "noRecords": "기록이 없어요.",
+    "unknownDate": "날짜 알 수 없음"
+  },
+  "page": {
+    "moderation": "운영",
+    "product": "제품",
+    "backToReports": "신고 목록으로",
+    "backToFeedback": "피드백 목록으로"
+  },
+  "reports": {
+    "title": "처리 대기 신고",
+    "description": "모든 Buzz 커뮤니티의 신고를 검토해요.",
+    "submitted": "접수",
+    "detailTitle": "신고 상세",
+    "detailDescription": "릴레이에 접수된 신고 원문이에요.",
+    "status": "상태",
+    "reporter": "신고자",
+    "target": "대상",
+    "message": "메시지",
+    "deleted": "삭제됨",
+    "author": "작성자",
+    "created": "작성",
+    "messageUnavailable": "메시지 내용을 볼 수 없어요.",
+    "note": "메모",
+    "noNote": "메모가 없어요."
+  },
+  "feedback": {
+    "title": "피드백",
+    "description": "Buzz 전체에서 들어온 최근 제품 피드백이에요.",
+    "search": "피드백 검색",
+    "community": "커뮤니티",
+    "allCommunities": "모든 커뮤니티",
+    "received": "수신",
+    "anyTime": "전체 기간",
+    "lastDay": "최근 24시간",
+    "lastWeek": "최근 7일",
+    "lastMonth": "최근 30일",
+    "status": "상태",
+    "anyStatus": "모든 상태",
+    "statusNew": "새 피드백",
+    "statusReviewed": "검토함",
+    "statusArchived": "보관함",
+    "resultCount": "전체 {{total}}건 중 {{shown}}건",
+    "openFrom": "{{host}}에서 온 피드백 열기",
+    "unavailableCommunity": "알 수 없는 커뮤니티",
+    "communityUnavailable": "커뮤니티 정보 없음",
+    "noMatch": "일치하는 피드백이 없어요.",
+    "updateFailed": "변경하지 못했어요",
+    "detailTitle": "피드백 상세",
+    "detailDescription": "피드백 원문과 출처예요.",
+    "body": "피드백",
+    "attachments": "첨부 파일",
+    "submittedBy": "보낸 사람",
+    "event": "이벤트",
+    "created": "작성",
+    "attachmentFailed": "첨부 파일을 불러오지 못했어요",
+    "categoryBug": "버그",
+    "categoryPraise": "칭찬",
+    "categoryNeedsWork": "개선 필요",
+    "uncategorized": "분류 없음"
+  },
+  "nip07": {
+    "title": "Nostr 확장 프로그램이 필요해요",
+    "body": "이 릴레이는 NIP-98 HTTP 인증을 사용해요. <nos2x>nos2x</nos2x>나 <alby>Alby</alby> 같은 NIP-07 브라우저 확장 프로그램을 설치한 뒤 이 페이지를 새로고침하세요. 요청마다 Nostr 키로 서명해요.",
+    "reload": "새로고침"
+  }
+}

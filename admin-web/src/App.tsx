@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   type AuthMode,
   ApiFailure,
@@ -21,6 +22,7 @@ import type {
   Report,
   ReportDetail as ReportDetailData,
 } from "./types";
+import { i18n, setLanguage } from "./i18n";
 import { useResource } from "./useResource";
 
 function usePath() {
@@ -75,17 +77,18 @@ function StateView<T>({
   resource: ReturnType<typeof useResource<T>>;
   children: (data: T) => ReactNode;
 }) {
+  const { t } = useTranslation();
   if (resource.loading && !resource.data)
-    return <div className="state">Loading…</div>;
+    return <div className="state">{t("state.loading")}</div>;
   if (resource.error && !resource.data) {
     const forbidden =
       resource.error instanceof ApiFailure && resource.error.status === 403;
     return (
       <div className="state error" role="alert">
-        <h2>{forbidden ? "Access denied" : "Could not load data"}</h2>
+        <h2>{forbidden ? t("state.accessDenied") : t("state.loadFailed")}</h2>
         <p>{resource.error.message}</p>
         <button type="button" onClick={resource.refetch}>
-          Retry
+          {t("state.retry")}
         </button>
       </div>
     );
@@ -94,15 +97,16 @@ function StateView<T>({
 }
 
 function Reports({ authMode }: { authMode: AuthMode }) {
+  const { t } = useTranslation();
   const resource = useResource(
     () => request<Report[]>("/reports?status=open&limit=100", authMode),
     "reports",
   );
   return (
     <Page
-      eyebrow="Moderation"
-      title="Open reports"
-      description="Review reports across every Buzz community."
+      eyebrow={t("page.moderation")}
+      title={t("reports.title")}
+      description={t("reports.description")}
     >
       <StateView resource={resource}>
         {(reports) =>
@@ -126,7 +130,7 @@ function Reports({ authMode }: { authMode: AuthMode }) {
                       </code>
                     </div>
                     <div className="record-date">
-                      <span>Submitted</span>
+                      <span>{t("reports.submitted")}</span>
                       <time>{date(report.createdAt)}</time>
                     </div>
                     <ArrowIcon />
@@ -144,15 +148,16 @@ function Reports({ authMode }: { authMode: AuthMode }) {
 }
 
 function ReportDetail({ id, authMode }: { id: string; authMode: AuthMode }) {
+  const { t } = useTranslation();
   const resource = useResource(
     () => request<ReportDetailData>(`/reports/${id}`, authMode),
     id,
   );
   return (
     <Page
-      eyebrow="Moderation"
-      title="Report detail"
-      description="The full report as submitted to the relay."
+      eyebrow={t("page.moderation")}
+      title={t("reports.detailTitle")}
+      description={t("reports.detailDescription")}
       back="/reports"
     >
       <StateView resource={resource}>
@@ -168,46 +173,46 @@ function ReportDetail({ id, authMode }: { id: string; authMode: AuthMode }) {
               </div>
             </div>
             <dl>
-              <dt>Status</dt>
+              <dt>{t("reports.status")}</dt>
               <dd>
                 <span className="status">{report.status}</span>
               </dd>
-              <dt>Reporter</dt>
+              <dt>{t("reports.reporter")}</dt>
               <dd>
                 <code>{report.reporterPubkey}</code>
               </dd>
-              <dt>Target</dt>
+              <dt>{t("reports.target")}</dt>
               <dd>
                 <code>{report.target}</code>
               </dd>
               {report.targetKind === "event" ? (
                 <>
-                  <dt>Message</dt>
+                  <dt>{t("reports.message")}</dt>
                   <dd>
                     {report.message ? (
                       <div className="reported-message">
                         {report.message.deletedAt ? (
-                          <span className="status">Deleted</span>
+                          <span className="status">{t("reports.deleted")}</span>
                         ) : null}
                         <p>{report.message.content}</p>
                         <div className="reported-message-meta">
-                          <span>Author</span>
+                          <span>{t("reports.author")}</span>
                           <code>{report.message.authorPubkey}</code>
-                          <span>Created</span>
+                          <span>{t("reports.created")}</span>
                           <time>{date(report.message.createdAt)}</time>
                         </div>
                       </div>
                     ) : (
                       <p className="message-unavailable">
-                        Message content is unavailable.
+                        {t("reports.messageUnavailable")}
                       </p>
                     )}
                   </dd>
                 </>
               ) : null}
-              <dt>Note</dt>
+              <dt>{t("reports.note")}</dt>
               <dd className="sensitive">
-                {report.note ?? "No note provided."}
+                {report.note ?? t("reports.noNote")}
               </dd>
             </dl>
           </article>
@@ -218,6 +223,7 @@ function ReportDetail({ id, authMode }: { id: string; authMode: AuthMode }) {
 }
 
 function FeedbackList({ authMode }: { authMode: AuthMode }) {
+  const { t } = useTranslation();
   const resource = useResource(
     () => request<FeedbackSummary[]>("/feedback", authMode),
     "feedback",
@@ -243,9 +249,9 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
 
   return (
     <Page
-      eyebrow="Product"
-      title="Feedback"
-      description="Recent product feedback from across Buzz."
+      eyebrow={t("page.product")}
+      title={t("feedback.title")}
+      description={t("feedback.description")}
     >
       <StateView resource={resource}>
         {(items) => {
@@ -263,24 +269,26 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
                 <>
                   <div className="feedback-filters">
                     <label className="search-field">
-                      <span>Search feedback</span>
+                      <span>{t("feedback.search")}</span>
                       <div>
                         <SearchIcon />
                         <input
                           type="search"
-                          placeholder="Search feedback"
+                          placeholder={t("feedback.search")}
                           value={query}
                           onChange={(event) => setQuery(event.target.value)}
                         />
                       </div>
                     </label>
                     <label>
-                      <span>Community</span>
+                      <span>{t("feedback.community")}</span>
                       <select
                         value={community}
                         onChange={(event) => setCommunity(event.target.value)}
                       >
-                        <option value="all">All communities</option>
+                        <option value="all">
+                          {t("feedback.allCommunities")}
+                        </option>
                         {communities.map((host) => (
                           <option key={host} value={host}>
                             {host}
@@ -289,34 +297,41 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
                       </select>
                     </label>
                     <label>
-                      <span>Received</span>
+                      <span>{t("feedback.received")}</span>
                       <select
                         value={timeRange}
                         onChange={(event) => setTimeRange(event.target.value)}
                       >
-                        <option value="all">Any time</option>
-                        <option value="day">Last 24 hours</option>
-                        <option value="week">Last 7 days</option>
-                        <option value="month">Last 30 days</option>
+                        <option value="all">{t("feedback.anyTime")}</option>
+                        <option value="day">{t("feedback.lastDay")}</option>
+                        <option value="week">{t("feedback.lastWeek")}</option>
+                        <option value="month">{t("feedback.lastMonth")}</option>
                       </select>
                     </label>
                     <label>
-                      <span>Status</span>
+                      <span>{t("feedback.status")}</span>
                       <select
                         value={statusFilter}
                         onChange={(event) =>
                           setStatusFilter(event.target.value)
                         }
                       >
-                        <option value="all">Any status</option>
-                        <option value="new">New</option>
-                        <option value="reviewed">Reviewed</option>
-                        <option value="archived">Archived</option>
+                        <option value="all">{t("feedback.anyStatus")}</option>
+                        <option value="new">{t("feedback.statusNew")}</option>
+                        <option value="reviewed">
+                          {t("feedback.statusReviewed")}
+                        </option>
+                        <option value="archived">
+                          {t("feedback.statusArchived")}
+                        </option>
                       </select>
                     </label>
                   </div>
                   <p className="result-count" aria-live="polite">
-                    {filtered.length} of {items.length} submissions
+                    {t("feedback.resultCount", {
+                      shown: filtered.length,
+                      total: items.length,
+                    })}
                   </p>
                   {filtered.length ? (
                     <div className="cards">
@@ -349,7 +364,7 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
                             onApplied={applyStatus}
                           />
                           <div className="record-date">
-                            <span>Received</span>
+                            <span>{t("feedback.received")}</span>
                             <time>{date(item.receivedAt)}</time>
                           </div>
                           <Link
@@ -357,7 +372,9 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
                             className="record-open-link"
                           >
                             <span className="visually-hidden">
-                              Open feedback from {hostLabel(item.communityHost)}
+                              {t("feedback.openFrom", {
+                                host: hostLabel(item.communityHost),
+                              })}
                             </span>
                             <ArrowIcon />
                           </Link>
@@ -365,7 +382,7 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
                       ))}
                     </div>
                   ) : (
-                    <div className="state">No matching feedback.</div>
+                    <div className="state">{t("feedback.noMatch")}</div>
                   )}
                 </>
               )}
@@ -377,10 +394,10 @@ function FeedbackList({ authMode }: { authMode: AuthMode }) {
   );
 }
 
-const STATUS_LABELS: Record<FeedbackStatus, string> = {
-  new: "New",
-  reviewed: "Reviewed",
-  archived: "Archived",
+const STATUS_LABEL_KEYS: Record<FeedbackStatus, string> = {
+  new: "feedback.statusNew",
+  reviewed: "feedback.statusReviewed",
+  archived: "feedback.statusArchived",
 };
 
 const STATUS_OPTIONS: FeedbackStatus[] = ["new", "reviewed", "archived"];
@@ -403,6 +420,7 @@ function FeedbackStatusControl({
   canWrite: boolean;
   onApplied: (id: string, status: FeedbackStatus) => void;
 }) {
+  const { t } = useTranslation();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
 
@@ -410,7 +428,7 @@ function FeedbackStatusControl({
     return (
       <span className="feedback-status">
         <span className={`status status-${status}`}>
-          {STATUS_LABELS[status]}
+          {t(STATUS_LABEL_KEYS[status])}
         </span>
       </span>
     );
@@ -437,17 +455,17 @@ function FeedbackStatusControl({
 
   return (
     <label className="feedback-status">
-      <span className="visually-hidden">Status</span>
+      <span className="visually-hidden">{t("feedback.status")}</span>
       <select value={status} onChange={onChange} disabled={pending}>
         {STATUS_OPTIONS.map((option) => (
           <option key={option} value={option}>
-            {STATUS_LABELS[option]}
+            {t(STATUS_LABEL_KEYS[option])}
           </option>
         ))}
       </select>
       {error ? (
         <span className="status-error" role="alert">
-          Update failed
+          {t("feedback.updateFailed")}
         </span>
       ) : null}
     </label>
@@ -457,12 +475,17 @@ function FeedbackStatusControl({
 /// Feedback whose source community was purged carries no host. Render an
 /// explicit provenance-unavailable marker rather than an empty slot.
 function Provenance({ host }: { host: string | null }) {
+  const { t } = useTranslation();
   if (host) return host;
-  return <span className="provenance-unavailable">Community unavailable</span>;
+  return (
+    <span className="provenance-unavailable">
+      {t("feedback.communityUnavailable")}
+    </span>
+  );
 }
 
 function hostLabel(host: string | null): string {
-  return host ?? "an unavailable community";
+  return host ?? i18n.t("feedback.unavailableCommunity");
 }
 
 function FeedbackResults({
@@ -519,17 +542,18 @@ function FeedbackDetailView({
   id: string;
   authMode: AuthMode;
 }) {
+  const { t } = useTranslation();
   const resource = useResource(
     () => request<FeedbackDetail>(`/feedback/${id}`, authMode),
     id,
   );
   return (
     <Page
-      eyebrow="Product"
-      title="Feedback detail"
-      description="The complete feedback submission and its source."
+      eyebrow={t("page.product")}
+      title={t("feedback.detailTitle")}
+      description={t("feedback.detailDescription")}
       back="/feedback"
-      backLabel="Back to feedback"
+      backLabel={t("page.backToFeedback")}
     >
       <StateView resource={resource}>
         {(feedback) => {
@@ -558,11 +582,11 @@ function FeedbackDetailView({
                 </div>
               </div>
               <dl>
-                <dt>Feedback</dt>
+                <dt>{t("feedback.body")}</dt>
                 <dd className="sensitive feedback-body">{body}</dd>
                 {attachments.length ? (
                   <>
-                    <dt>Attachments</dt>
+                    <dt>{t("feedback.attachments")}</dt>
                     <dd className="attachments">
                       {attachments.map((attachment) => (
                         <Attachment
@@ -574,17 +598,17 @@ function FeedbackDetailView({
                     </dd>
                   </>
                 ) : null}
-                <dt>Submitted by</dt>
+                <dt>{t("feedback.submittedBy")}</dt>
                 <dd>
                   <code>{feedback.submitterPubkey}</code>
                 </dd>
-                <dt>Event</dt>
+                <dt>{t("feedback.event")}</dt>
                 <dd>
                   <code>{feedback.eventId}</code>
                 </dd>
-                <dt>Created</dt>
+                <dt>{t("feedback.created")}</dt>
                 <dd>{date(feedback.eventCreatedAt)}</dd>
-                <dt>Received</dt>
+                <dt>{t("feedback.received")}</dt>
                 <dd>{date(feedback.receivedAt)}</dd>
               </dl>
             </article>
@@ -688,6 +712,7 @@ function Attachment({
   attachment: FeedbackAttachment;
   authMode: AuthMode;
 }) {
+  const { t } = useTranslation();
   const [objectUrl, setObjectUrl] = useState<string>();
   const [objectType, setObjectType] = useState<string>();
   const [failed, setFailed] = useState(false);
@@ -729,7 +754,7 @@ function Attachment({
     };
   }, [path, authMode]);
 
-  const detail = failed ? "Could not load attachment" : metadata;
+  const detail = failed ? t("feedback.attachmentFailed") : metadata;
 
   // Inline rendering is gated on the server-VERIFIED blob type, never the
   // reporter-supplied `attachment.mimeType`: the relay only labels sniffed
@@ -796,12 +821,13 @@ function Page({
   backLabel?: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <section>
       <header className="page-title">
         {back ? (
           <Link href={back} className="back-link">
-            <ArrowIcon /> {backLabel ?? "Back to reports"}
+            <ArrowIcon /> {backLabel ?? t("page.backToReports")}
           </Link>
         ) : null}
         <p>{eyebrow}</p>
@@ -814,7 +840,8 @@ function Page({
 }
 
 function Empty() {
-  return <div className="state">No records.</div>;
+  const { t } = useTranslation();
+  return <div className="state">{t("state.noRecords")}</div>;
 }
 
 function short(value: string) {
@@ -824,8 +851,8 @@ function short(value: string) {
 function date(value: string) {
   const parsed = new Date(value);
   return Number.isNaN(parsed.valueOf())
-    ? "Unknown date"
-    : parsed.toLocaleString();
+    ? i18n.t("state.unknownDate")
+    : parsed.toLocaleString(i18n.resolvedLanguage);
 }
 
 function BuzzMark() {
@@ -860,15 +887,16 @@ function FeedbackIcon() {
 }
 
 function CategoryTag({ category }: { category?: string }) {
+  const { t } = useTranslation();
   const labels: Record<string, string> = {
-    bug: "Bug",
-    praise: "Praise",
-    "needs-work": "Needs work",
+    bug: t("feedback.categoryBug"),
+    praise: t("feedback.categoryPraise"),
+    "needs-work": t("feedback.categoryNeedsWork"),
   };
   return (
     <span className="tag">
       <CategoryIcon category={category} />
-      {category ? (labels[category] ?? category) : "Uncategorized"}
+      {category ? (labels[category] ?? category) : t("feedback.uncategorized")}
     </span>
   );
 }
@@ -936,36 +964,60 @@ function ArrowIcon() {
 /// Shown in nip98 mode when no NIP-07 extension is available. Instructs the
 /// operator to install nos2x or Alby before continuing.
 function Nip07Screen() {
+  const { t } = useTranslation();
   return (
     <div className="app">
       <div className="state auth-prompt">
-        <h2>Nostr extension required</h2>
+        <h2>{t("nip07.title")}</h2>
         <p>
-          This relay uses NIP-98 HTTP Auth. Install a NIP-07 browser extension
-          such as{" "}
-          <a
-            href="https://github.com/fiatjaf/nos2x"
-            target="_blank"
-            rel="noreferrer"
-          >
-            nos2x
-          </a>{" "}
-          or{" "}
-          <a href="https://getalby.com" target="_blank" rel="noreferrer">
-            Alby
-          </a>
-          , then reload this page. Your Nostr key will be used to sign each
-          request.
+          <Trans
+            i18nKey="nip07.body"
+            components={{
+              nos2x: (
+                // biome-ignore lint/a11y/useAnchorContent: Trans supplies the link text.
+                <a
+                  href="https://github.com/fiatjaf/nos2x"
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              ),
+              alby: (
+                // biome-ignore lint/a11y/useAnchorContent: Trans supplies the link text.
+                <a
+                  href="https://getalby.com"
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              ),
+            }}
+          />
         </p>
         <button type="button" onClick={() => location.reload()}>
-          Reload
+          {t("nip07.reload")}
         </button>
       </div>
     </div>
   );
 }
 
+function LanguageToggle() {
+  const { t, i18n: instance } = useTranslation();
+  const next = instance.resolvedLanguage === "ko" ? "en" : "ko";
+  const nextLabel = t(`language.${next}`);
+  return (
+    <button
+      type="button"
+      className="nav-link language-toggle"
+      onClick={() => setLanguage(next)}
+      aria-label={t("language.switchTo", { language: nextLabel })}
+    >
+      {nextLabel}
+    </button>
+  );
+}
+
 export function App() {
+  const { t } = useTranslation();
   const { path } = usePath();
 
   // Probe the relay once to discover the auth mode. `null` means the probe is
@@ -1008,16 +1060,17 @@ export function App() {
             <BuzzMark />
           </span>
           <span>
-            Buzz <b>Admin</b>
+            Buzz <b>{t("nav.admin")}</b>
           </span>
         </Link>
         <nav>
           <Link href="/reports" className="nav-link" activeWhenNested>
-            <ReportIcon /> Reports
+            <ReportIcon /> {t("nav.reports")}
           </Link>
           <Link href="/feedback" className="nav-link" activeWhenNested>
-            <FeedbackIcon /> Feedback
+            <FeedbackIcon /> {t("nav.feedback")}
           </Link>
+          <LanguageToggle />
         </nav>
       </header>
       <main>{content}</main>

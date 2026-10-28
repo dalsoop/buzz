@@ -1,0 +1,83 @@
+{
+  "language": {
+    "switchTo": "Switch language to {{language}}",
+    "en": "English",
+    "ko": "한국어"
+  },
+  "nav": {
+    "admin": "Admin",
+    "reports": "Reports",
+    "feedback": "Feedback"
+  },
+  "state": {
+    "loading": "Loading…",
+    "accessDenied": "Access denied",
+    "loadFailed": "Could not load data",
+    "retry": "Retry",
+    "noRecords": "No records.",
+    "unknownDate": "Unknown date"
+  },
+  "page": {
+    "moderation": "Moderation",
+    "product": "Product",
+    "backToReports": "Back to reports",
+    "backToFeedback": "Back to feedback"
+  },
+  "reports": {
+    "title": "Open reports",
+    "description": "Review reports across every Buzz community.",
+    "submitted": "Submitted",
+    "detailTitle": "Report detail",
+    "detailDescription": "The full report as submitted to the relay.",
+    "status": "Status",
+    "reporter": "Reporter",
+    "target": "Target",
+    "message": "Message",
+    "deleted": "Deleted",
+    "author": "Author",
+    "created": "Created",
+    "messageUnavailable": "Message content is unavailable.",
+    "note": "Note",
+    "noNote": "No note provided."
+  },
+  "feedback": {
+    "title": "Feedback",
+    "description": "Recent product feedback from across Buzz.",
+    "search": "Search feedback",
+    "community": "Community",
+    "allCommunities": "All communities",
+    "received": "Received",
+    "anyTime": "Any time",
+    "lastDay": "Last 24 hours",
+    "lastWeek": "Last 7 days",
+    "lastMonth": "Last 30 days",
+    "status": "Status",
+    "anyStatus": "Any status",
+    "statusNew": "New",
+    "statusReviewed": "Reviewed",
+    "statusArchived": "Archived",
+    "resultCount": "{{shown}} of {{total}} submissions",
+    "openFrom": "Open feedback from {{host}}",
+    "unavailableCommunity": "an unavailable community",
+    "communityUnavailable": "Community unavailable",
+    "noMatch": "No matching feedback.",
+    "updateFailed": "Update failed",
+    "detailTitle": "Feedback detail",
+    "detailDescription": "The complete feedback submission and its source.",
+    "body": "Feedback",
+    "attachments": "Attachments",
+    "submittedBy": "Submitted by",
+    "event": "Event",
+    "created": "Created",
+    "attachmentFailed": "Could not load attachment",
+    "categoryBug": "Bug",
+    "categoryPraise": "Praise",
+    "categoryNeedsWork": "Needs work",
+    "uncategorized": "Uncategorized"
+  },
+  "nip07": {
+    "title": "Nostr extension required",
+    "body": "This relay uses NIP-98 HTTP Auth. Install a NIP-07 browser extension such as <nos2x>nos2x</nos2x> or <alby>Alby</alby>, then reload this page. Your Nostr key will be used to sign each request.",
+    "reload": "Reload"
+  }
+}

@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -32,16 +33,17 @@ import { RepoCommitsSection } from "./RepoCommitsSection";
 import { RepoReadmeSection } from "./RepoReadmeSection";
 
 function CopyableUrl({ url }: { url: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success("Copied to clipboard");
+      toast.success(t("common.copied"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(t("common.copyFailed"));
     }
   }
 
@@ -54,7 +56,7 @@ function CopyableUrl({ url }: { url: string }) {
         type="button"
         onClick={handleCopy}
         className="shrink-0 text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
-        aria-label="Copy clone URL"
+        aria-label={t("repo.copyCloneUrl")}
       >
         {copied ? (
           <Check className="h-4 w-4 text-green-500" />
@@ -88,12 +90,13 @@ function BackToRepositories({
 }: {
   mockPreview?: boolean;
 }) {
+  const { t } = useTranslation();
   const className =
     "inline-flex items-center gap-1 text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white";
   const content = (
     <>
       <ArrowLeft className="h-4 w-4" />
-      Back to repositories
+      {t("repo.backToRepositories")}
     </>
   );
 
@@ -129,6 +132,7 @@ function RepoTabs({
   readmeLoading: boolean;
   preview: boolean;
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("code");
 
   return (
@@ -144,7 +148,7 @@ function RepoTabs({
               : "text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
           }`}
         >
-          Code
+          {t("repo.tabCode")}
         </button>
         <button
           type="button"
@@ -155,7 +159,7 @@ function RepoTabs({
               : "text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white"
           }`}
         >
-          Commits
+          {t("repo.tabCommits")}
         </button>
       </div>
 
@@ -179,6 +183,7 @@ function RepoTabs({
 }
 
 export function RepoDetailPage() {
+  const { t } = useTranslation();
   const { repoId } = useParams({ from: "/repos/$repoId" });
   const preview =
     import.meta.env.DEV &&
@@ -234,11 +239,11 @@ export function RepoDetailPage() {
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to load repository", {
+      toast.error(t("repo.loadFailed"), {
         description: error.message,
       });
     }
-  }, [error]);
+  }, [error, t]);
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -250,11 +255,10 @@ export function RepoDetailPage() {
           <div className="mt-12 text-center">
             <BookMarked className="mx-auto h-10 w-10 text-black/50 dark:text-white/50" />
             <h1 className="mt-4 text-xl font-semibold text-black dark:text-white">
-              Repository not found
+              {t("repo.notFoundTitle")}
             </h1>
             <p className="mt-1 text-sm text-black/60 dark:text-white/60">
-              This repository may have been removed or doesn't exist on this
-              relay.
+              {t("repo.notFoundBody")}
             </p>
           </div>
         </div>
@@ -286,7 +290,7 @@ export function RepoDetailPage() {
               variant="outline"
               className="border-black/15 text-black/60 dark:border-white/15 dark:text-white/60"
             >
-              Public
+              {t("common.public")}
             </Badge>
           </div>
           {repo.description && (
@@ -295,7 +299,7 @@ export function RepoDetailPage() {
             </p>
           )}
           <p className="mt-2 text-xs text-black/50 dark:text-white/50">
-            Updated {relativeTime(repo.createdAt)}
+            {t("common.updated", { time: relativeTime(repo.createdAt) })}
           </p>
         </div>
 
@@ -305,10 +309,12 @@ export function RepoDetailPage() {
         {/* Clone/browse error banner */}
         {browseError && (
           <div className="mt-6 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Failed to load repository contents:{" "}
-            {browseError instanceof Error
-              ? browseError.message
-              : String(browseError)}
+            {t("repo.contentsLoadFailed", {
+              reason:
+                browseError instanceof Error
+                  ? browseError.message
+                  : String(browseError),
+            })}
           </div>
         )}
 
@@ -328,7 +334,7 @@ export function RepoDetailPage() {
         {repo.cloneUrls.length > 0 && (
           <div className="mt-8">
             <h2 className="mb-3 text-sm font-semibold text-black dark:text-white">
-              Clone
+              {t("repo.clone")}
             </h2>
             <div className="space-y-2">
               {repo.cloneUrls.map((url) => (
@@ -359,7 +365,7 @@ export function RepoDetailPage() {
               >
                 <a href={safe} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" />
-                  View on web
+                  {t("repo.viewOnWeb")}
                 </a>
               </Button>
             </div>
@@ -376,7 +382,7 @@ export function RepoDetailPage() {
             >
               <a href={`/channels/${repo.channelId}`}>
                 <MessageSquare className="h-4 w-4" />
-                View channel
+                {t("repo.viewChannel")}
               </a>
             </Button>
           </div>
@@ -393,7 +399,7 @@ export function RepoDetailPage() {
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-black dark:text-white">
               <Users className="h-4 w-4" />
-              People
+              {t("common.people")}
             </h3>
             <div className="flex flex-wrap gap-2">
               <PubkeyAvatar pubkey={repo.owner} />

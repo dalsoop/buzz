@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Trans, useTranslation } from "react-i18next";
 
 type InviteJoinPolicy = {
   terms_markdown?: string;
@@ -70,6 +71,24 @@ function PolicyCheckbox({
   );
 }
 
+function PolicyDocumentButton({
+  children,
+  onClick,
+}: {
+  children?: React.ReactNode;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      className="text-black no-underline underline-offset-4 hover:text-black/70 hover:underline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-black"
+      type="button"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 /** The invite page's age and legal confirmations. */
 export function InviteJoinPolicyNotice({
   ageConfirmed,
@@ -86,6 +105,7 @@ export function InviteJoinPolicyNotice({
   onShowDocument: (title: string, markdown: string) => void;
   policy: InviteJoinPolicy;
 }) {
+  const { t } = useTranslation();
   const stopLabelActivation = (
     event: React.MouseEvent<HTMLButtonElement>,
     title: string,
@@ -103,57 +123,51 @@ export function InviteJoinPolicyNotice({
     >
       {policy.age_attestation_required ? (
         <PolicyCheckbox
-          accessibleLabel="I am 18 years of age or older."
+          accessibleLabel={t("invite.ageConfirm")}
           checked={ageConfirmed}
           onCheckedChange={onAgeConfirmedChange}
         >
-          I am 18 years of age or older.
+          {t("invite.ageConfirm")}
         </PolicyCheckbox>
       ) : null}
 
       {policy.terms_markdown || policy.privacy_markdown ? (
         <PolicyCheckbox
-          accessibleLabel="I agree to the Buzz Terms of Service and Privacy Policy."
+          accessibleLabel={t("invite.agreementLabel")}
           checked={agreementConfirmed}
           onCheckedChange={onAgreementConfirmedChange}
         >
-          I agree to the Buzz{" "}
-          {policy.terms_markdown ? (
-            <button
-              className="text-black no-underline underline-offset-4 hover:text-black/70 hover:underline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-black"
-              type="button"
-              onClick={(event) =>
-                stopLabelActivation(
-                  event,
-                  "Terms of Service",
-                  policy.terms_markdown ?? "",
-                )
-              }
-            >
-              Terms of Service
-            </button>
-          ) : (
-            "Terms of Service"
-          )}{" "}
-          and{" "}
-          {policy.privacy_markdown ? (
-            <button
-              className="text-black no-underline underline-offset-4 hover:text-black/70 hover:underline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-black"
-              type="button"
-              onClick={(event) =>
-                stopLabelActivation(
-                  event,
-                  "Privacy Policy",
-                  policy.privacy_markdown ?? "",
-                )
-              }
-            >
-              Privacy Policy
-            </button>
-          ) : (
-            "Privacy Policy"
-          )}
-          .
+          <Trans
+            i18nKey="invite.agreement"
+            components={{
+              terms: policy.terms_markdown ? (
+                <PolicyDocumentButton
+                  onClick={(event) =>
+                    stopLabelActivation(
+                      event,
+                      t("invite.terms"),
+                      policy.terms_markdown ?? "",
+                    )
+                  }
+                />
+              ) : (
+                <span />
+              ),
+              privacy: policy.privacy_markdown ? (
+                <PolicyDocumentButton
+                  onClick={(event) =>
+                    stopLabelActivation(
+                      event,
+                      t("invite.privacy"),
+                      policy.privacy_markdown ?? "",
+                    )
+                  }
+                />
+              ) : (
+                <span />
+              ),
+            }}
+          />
         </PolicyCheckbox>
       ) : null}
     </div>

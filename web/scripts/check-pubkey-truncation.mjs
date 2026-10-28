@@ -16,7 +16,7 @@ const overrides = new Set([
   // Avatar fallback initials — two glyphs inside an avatar disc.
   "src/features/repos/ui/PubkeyAvatar.tsx:29",
   // Array window (first N pubkeys), not string truncation.
-  "src/features/repos/ui/OrgSidebar.tsx:22",
+  "src/features/repos/ui/OrgSidebar.tsx:24",
 ]);
 
 await runPubkeyTruncationCheck({

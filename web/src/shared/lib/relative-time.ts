@@ -1,3 +1,5 @@
+import { i18n } from "@/shared/i18n";
+
 /** Format a Unix timestamp (seconds) as a human-readable relative time string. */
 export function relativeTime(unix: number): string {
   const diff = Date.now() - unix * 1000;
@@ -7,12 +9,10 @@ export function relativeTime(unix: number): string {
   const days = Math.floor(hours / 24);
 
   if (days > 30) {
-    const months = Math.floor(days / 30);
-    return months === 1 ? "1 month ago" : `${months} months ago`;
+    return i18n.t("time.monthsAgo", { count: Math.floor(days / 30) });
   }
-  if (days > 0) return days === 1 ? "1 day ago" : `${days} days ago`;
-  if (hours > 0) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
-  if (minutes > 0)
-    return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
-  return "just now";
+  if (days > 0) return i18n.t("time.daysAgo", { count: days });
+  if (hours > 0) return i18n.t("time.hoursAgo", { count: hours });
+  if (minutes > 0) return i18n.t("time.minutesAgo", { count: minutes });
+  return i18n.t("time.justNow");
 }

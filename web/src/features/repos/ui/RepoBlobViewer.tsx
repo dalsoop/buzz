@@ -9,6 +9,7 @@
  */
 import { ArrowLeft, Check, Copy, Download, FileText, Play } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "@tanstack/react-router";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -60,6 +61,7 @@ function useObjectUrl(
 }
 
 function CopyTextButton({ content }: { content: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -70,15 +72,15 @@ function CopyTextButton({ content }: { content: string }) {
         try {
           await navigator.clipboard.writeText(content);
           setCopied(true);
-          toast.success("Copied to clipboard");
+          toast.success(t("common.copied"));
           setTimeout(() => setCopied(false), 2000);
         } catch {
-          toast.error("Failed to copy to clipboard");
+          toast.error(t("common.copyFailed"));
         }
       }}
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      <span className="ml-2">Copy</span>
+      <span className="ml-2">{t("common.copy")}</span>
     </Button>
   );
 }
@@ -92,6 +94,7 @@ function DownloadButton({
   contentType: string;
   filename: string;
 }) {
+  const { t } = useTranslation();
   const url = useObjectUrl(bytes, contentType);
   if (!url) return null;
   return (
@@ -103,7 +106,7 @@ function DownloadButton({
     >
       <a href={url} download={filename}>
         <Download className="h-4 w-4" />
-        <span className="ml-2">Download</span>
+        <span className="ml-2">{t("common.download")}</span>
       </a>
     </Button>
   );
@@ -157,9 +160,10 @@ function ImageView({
 const RUN_SANDBOX = "allow-scripts";
 
 function HtmlRunView({ doc }: { doc: string }) {
+  const { t } = useTranslation();
   return (
     <iframe
-      title="Repository page (sandboxed)"
+      title={t("blob.sandboxTitle")}
       srcDoc={doc}
       sandbox={RUN_SANDBOX}
       className="h-[80vh] w-full rounded-lg border border-black/10 bg-white dark:border-white/10"
@@ -176,6 +180,7 @@ function ViewerBody({
   filename: string;
   htmlDoc: string | null;
 }) {
+  const { t } = useTranslation();
   switch (view.kind) {
     case "text":
       return <TextView content={view.content} />;
@@ -204,22 +209,23 @@ function ViewerBody({
     case "binary":
       return (
         <div className="rounded-lg border border-black/10 bg-white/50 p-6 text-sm text-black/60 dark:border-white/10 dark:bg-white/5 dark:text-white/60">
-          Binary file — {formatBytes(view.sizeBytes)}. Use the Download button
-          above to save it.
+          {t("blob.binary", { size: formatBytes(view.sizeBytes) })}
         </div>
       );
     case "too-large":
       return (
         <div className="rounded-lg border border-black/10 bg-white/50 p-6 text-sm text-black/60 dark:border-white/10 dark:bg-white/5 dark:text-white/60">
-          File is {formatBytes(view.sizeBytes)}, over the{" "}
-          {formatBytes(view.limitBytes)} preview limit. Use the Download button
-          above to save it.
+          {t("blob.tooLarge", {
+            size: formatBytes(view.sizeBytes),
+            limit: formatBytes(view.limitBytes),
+          })}
         </div>
       );
   }
 }
 
 export function RepoBlobPage() {
+  const { t } = useTranslation();
   const { repoId, _splat } = useParams({ from: "/repos/$repoId/blob/$" });
   const filepath = _splat ?? "";
   const preview =
@@ -264,7 +270,7 @@ export function RepoBlobPage() {
       <div className="flex-1 bg-[#F3F3F3] px-4 py-8 text-black dark:bg-[#171717] dark:text-white">
         <BackLink repoId={repoId} preview={showMockBlob} />
         <p className="mt-4 text-sm text-destructive">
-          Failed to load repository: {ctxError.message}
+          {t("repo.loadFailedWithReason", { reason: ctxError.message })}
         </p>
       </div>
     );
@@ -292,7 +298,9 @@ export function RepoBlobPage() {
               onClick={() => setRunning((r) => !r)}
             >
               <Play className="h-4 w-4" />
-              <span className="ml-2">{running ? "Show source" : "Run"}</span>
+              <span className="ml-2">
+                {running ? t("blob.showSource") : t("blob.run")}
+              </span>
             </Button>
           )}
           {view &&
@@ -317,7 +325,7 @@ export function RepoBlobPage() {
           <div className="h-32 animate-pulse rounded-lg bg-black/10 dark:bg-white/10" />
         ) : error ? (
           <p className="text-sm text-destructive">
-            Failed to load file: {(error as Error).message}
+            {t("blob.loadFailed", { reason: (error as Error).message })}
           </p>
         ) : view ? (
           <ViewerBody
@@ -332,6 +340,7 @@ export function RepoBlobPage() {
 }
 
 function BackLink({ repoId, preview }: { repoId: string; preview: boolean }) {
+  const { t } = useTranslation();
   return (
     <Link
       to="/repos/$repoId"
@@ -340,7 +349,7 @@ function BackLink({ repoId, preview }: { repoId: string; preview: boolean }) {
       className="inline-flex items-center gap-1 text-sm text-black/60 hover:text-black dark:text-white/60 dark:hover:text-white"
     >
       <ArrowLeft className="h-4 w-4" />
-      Back to repository
+      {t("repo.backToRepository")}
     </Link>
   );
 }

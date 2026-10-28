@@ -1,5 +1,6 @@
 import { BookMarked } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/shared/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
@@ -14,6 +15,7 @@ export function RepoListItem({
   repo: Repo;
   preview?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="py-6 text-black dark:text-white">
       {/* Row 1: Name + badge */}
@@ -31,7 +33,7 @@ export function RepoListItem({
           variant="outline"
           className="ml-1 border-black/15 text-black/60 dark:border-white/15 dark:text-white/60"
         >
-          Public
+          {t("common.public")}
         </Badge>
       </div>
 
@@ -52,7 +54,9 @@ export function RepoListItem({
           </TooltipTrigger>
           <TooltipContent>{repo.owner}</TooltipContent>
         </Tooltip>
-        <span>Updated {relativeTime(repo.createdAt)}</span>
+        <span>
+          {t("common.updated", { time: relativeTime(repo.createdAt) })}
+        </span>
       </div>
     </div>
   );

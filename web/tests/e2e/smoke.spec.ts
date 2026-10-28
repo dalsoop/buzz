@@ -382,3 +382,40 @@ test("invite download links to the appropriate platform destination", async ({
     await context.close();
   }
 });
+
+test("Korean UI follows ?lang=ko and the language toggle", async ({ page }) => {
+  await page.route("**/api/join-policy", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        policy: {
+          terms_markdown: "# Terms",
+          privacy_markdown: "# Privacy",
+          age_attestation_required: true,
+          version: "v1",
+        },
+      }),
+    });
+  });
+
+  await page.goto("/invite/abc123?lang=ko");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ko");
+  await expect(page.getByText("다음 커뮤니티에 초대받았어요")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Buzz에서 초대 수락" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "서비스 약관" }).click();
+  await expect(page.getByRole("dialog", { name: "서비스 약관" })).toBeVisible();
+  await page
+    .getByRole("dialog", { name: "서비스 약관" })
+    .getByRole("button", { name: "닫기" })
+    .click();
+
+  // The choice persists, so the next visit without ?lang= stays in English.
+  await page.getByRole("button", { name: /English/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByText("You're invited to")).toBeVisible();
+  await page.goto("/invite/abc123");
+  await expect(page.getByText("You're invited to")).toBeVisible();
+});

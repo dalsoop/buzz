@@ -120,6 +120,14 @@ nav {
   color: #231e1e;
 }
 
+.language-toggle {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .nav-link[aria-current="page"] {
   color: #231e1e;
   background: white;

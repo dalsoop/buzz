@@ -1,0 +1,92 @@
+{
+  "language": {
+    "switchTo": "언어를 {{language}}(으)로 바꾸기",
+    "en": "English",
+    "ko": "한국어"
+  },
+  "common": {
+    "close": "닫기",
+    "copy": "복사",
+    "copied": "클립보드에 복사했어요",
+    "copyFailed": "클립보드에 복사하지 못했어요",
+    "download": "다운로드",
+    "openInBuzz": "Buzz에서 열기",
+    "people": "사람",
+    "peopleCount_other": "{{count}}명",
+    "public": "공개",
+    "updated": "{{time}} 업데이트"
+  },
+  "time": {
+    "justNow": "방금 전",
+    "minutesAgo_other": "{{count}}분 전",
+    "hoursAgo_other": "{{count}}시간 전",
+    "daysAgo_other": "{{count}}일 전",
+    "monthsAgo_other": "{{count}}개월 전"
+  },
+  "repos": {
+    "title": "저장소",
+    "loadFailed": "저장소 목록을 불러오지 못했어요",
+    "searchPlaceholder": "저장소 찾기...",
+    "sortLabel": "저장소 정렬",
+    "sortNewest": "최신순",
+    "sortOldest": "오래된순",
+    "sortName": "이름순",
+    "noMatchTitle": "일치하는 저장소가 없어요",
+    "noMatchBody": "검색어를 바꿔 보세요.",
+    "emptyTitle": "이 커뮤니티는 비어 있어요",
+    "emptyBody": "이 커뮤니티에 push한 저장소가 여기에 표시돼요. Buzz 데스크톱 앱에서 이 커뮤니티를 열고 코드를 push해 보세요."
+  },
+  "repo": {
+    "backToRepositories": "저장소 목록으로",
+    "backToRepository": "저장소로 돌아가기",
+    "loadFailed": "저장소를 불러오지 못했어요",
+    "loadFailedWithReason": "저장소를 불러오지 못했어요: {{reason}}",
+    "contentsLoadFailed": "저장소 내용을 불러오지 못했어요: {{reason}}",
+    "notFoundTitle": "저장소를 찾을 수 없어요",
+    "notFoundBody": "삭제되었거나 이 릴레이에 없는 저장소예요.",
+    "tabCode": "코드",
+    "tabCommits": "커밋",
+    "clone": "클론",
+    "copyCloneUrl": "클론 URL 복사",
+    "viewOnWeb": "웹에서 보기",
+    "viewChannel": "채널 보기",
+    "branches_other": "브랜치 {{count}}개",
+    "tags_other": "태그 {{count}}개",
+    "noCommits": "아직 커밋이 없어요",
+    "recentCommits": "최근 커밋",
+    "committed": "{{author}} · {{time}} 커밋"
+  },
+  "blob": {
+    "loadFailed": "파일을 불러오지 못했어요: {{reason}}",
+    "run": "실행",
+    "showSource": "소스 보기",
+    "sandboxTitle": "저장소 페이지 (샌드박스)",
+    "binary": "바이너리 파일 — {{size}}. 위의 다운로드 버튼으로 저장하세요.",
+    "tooLarge": "파일 크기가 {{size}}로, 미리보기 한도 {{limit}}를 넘어요. 위의 다운로드 버튼으로 저장하세요."
+  },
+  "invite": {
+    "invitedTo": "다음 커뮤니티에 초대받았어요",
+    "joinInBrowser": "브라우저에서 참여",
+    "joining": "참여하는 중…",
+    "acceptInBuzz": "Buzz에서 초대 수락",
+    "noApp": "앱이 없나요?",
+    "downloadNow": "지금 다운로드",
+    "browseReleases": "릴리스 둘러보기",
+    "claimFailed": "초대를 수락하지 못했어요.",
+    "exhausted": "이 초대는 사용 한도에 도달했어요. 새 초대를 요청하세요.",
+    "expired": "이 초대는 만료됐어요. 새 초대를 요청하세요.",
+    "invalid": "유효하지 않은 초대예요. 링크를 확인하거나 새 초대를 요청하세요.",
+    "ageConfirm": "만 18세 이상입니다.",
+    "agreementLabel": "Buzz 서비스 약관 및 개인정보 처리방침에 동의합니다.",
+    "agreement": "Buzz <terms>서비스 약관</terms> 및 <privacy>개인정보 처리방침</privacy>에 동의합니다.",
+    "terms": "서비스 약관",
+    "privacy": "개인정보 처리방침",
+    "macTitle": "어떤 Mac을 쓰고 있나요?",
+    "macSubtitle": "Mac이 출시된 시기를 기준으로 고르세요.",
+    "macNewer": "최신 Mac",
+    "macNewerDetail": "2021년 이후 모델, 또는 Apple M1 칩이 들어간 2020년 후반 Mac",
+    "macOlder": "이전 Mac",
+    "macOlderDetail": "2019년 이전 모델, 또는 Intel 프로세서가 들어간 2020년 Mac",
+    "macHelp": "<strong>잘 모르겠나요?</strong> Apple 메뉴에서 <strong>이 Mac에 관하여</strong>를 선택하세요. “칩: Apple M…”이면 최신 Mac, “프로세서: Intel”이면 이전 Mac이에요."
+  }
+}

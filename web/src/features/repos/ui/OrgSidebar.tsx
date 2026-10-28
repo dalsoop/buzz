@@ -1,5 +1,6 @@
 import { Users } from "lucide-react";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { Repo } from "../use-repos";
 import { ConnectButton } from "./ConnectButton";
@@ -8,6 +9,7 @@ import { PubkeyAvatar } from "./PubkeyAvatar";
 const MAX_AVATARS = 20;
 
 export function OrgSidebar({ repos }: { repos: Repo[] }) {
+  const { t } = useTranslation();
   const uniquePubkeys = useMemo(() => {
     const set = new Set<string>();
     for (const repo of repos) {
@@ -32,7 +34,7 @@ export function OrgSidebar({ repos }: { repos: Repo[] }) {
         <div>
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-black dark:text-white">
             <Users className="h-4 w-4" />
-            People
+            {t("common.people")}
           </h3>
           <div className="flex flex-wrap gap-2">
             {visiblePubkeys.map((pk) => (
@@ -41,7 +43,7 @@ export function OrgSidebar({ repos }: { repos: Repo[] }) {
           </div>
           {overflowCount > 0 && (
             <span className="mt-2 block text-xs text-black/50 dark:text-white/50">
-              {uniquePubkeys.length} people
+              {t("common.peopleCount", { count: uniquePubkeys.length })}
             </span>
           )}
         </div>

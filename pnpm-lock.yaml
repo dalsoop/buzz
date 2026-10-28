@@ -29,12 +29,18 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.0
         version: 6.0.5(vite@8.0.16(@types/node@25.6.0)(jiti@2.7.0)(yaml@2.9.0))
+      i18next:
+        specifier: ^25.10.10
+        version: 25.10.10(typescript@6.0.3)
       react:
         specifier: ^19.1.0
         version: 19.2.8
       react-dom:
         specifier: ^19.1.0
         version: 19.2.8(react@19.2.8)
+      react-i18next:
+        specifier: ^16.6.6
+        version: 16.6.6(i18next@25.10.10(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       vite:
         specifier: ^8.0.0
         version: 8.0.16(@types/node@25.6.0)(jiti@2.7.0)(yaml@2.9.0)
@@ -346,6 +352,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      i18next:
+        specifier: ^25.10.10
+        version: 25.10.10(typescript@6.0.3)
       isomorphic-git:
         specifier: ^1.38.3
         version: 1.38.10(patch_hash=e9b414a60d4cf1d8aa18f7a779483984e821989967c235662566e94ef0238d3f)
@@ -361,6 +370,9 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.2.8(react@19.2.8)
+      react-i18next:
+        specifier: ^16.6.6
+        version: 16.6.6(i18next@25.10.10(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.18)(react@19.2.8)
