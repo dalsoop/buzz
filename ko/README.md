@@ -57,3 +57,16 @@ ko/build-mac.sh publish 0.5.28   # GitHub Releases(ko-v0.5.28)에 올리고 업�
 - m5m1의 tmux 서버는 GUI 쪽 프로세스라 외장 볼륨(`/Volumes/Build`)을 읽을 때 macOS 권한 창을 띄우고 **조용히 멈춘다** (로그 0바이트). SSH로 원격 실행할 때는 tmux 말고 `ssh m5m1 'cd … && nohup ko/build-mac.sh … > log 2>&1 &'`를 쓴다.
 - 영구 해결: m5m1에서 시스템 설정 → 개인정보 보호 및 보안 → 파일 및 폴더(또는 전체 디스크 접근)에서 `/opt/homebrew/bin/tmux`에 **이동식 볼륨** 접근을 허용한다.
 - 진행 확인은 로그 크기로 한다. 로그가 10분 넘게 그대로면 멈춘 것으로 본다.
+
+## 장비 프로필 (`ko/devices.json`, `ko/fleet.sh`)
+
+장비별 SSH 계정·경유 경로·작업 폴더·sops 키·역할은 `ko/devices.json` 한 곳에만 둔다. 스크립트는 장비 이름만 받는다.
+
+```bash
+ko/fleet.sh check                         # 장비별 접속·여유 공간·설치 버전
+ko/fleet.sh job m5m1 build "cd /Volumes/Build/m5m1/buzz-ko && ko/build-mac.sh test-build"
+ko/fleet.sh wait m5m1 build               # 로그가 10분 멈추면 실패로 끝남
+ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 장비
+```
+
+`via`가 있는 장비(예: m1m2)는 그 장비를 거쳐 접속하므로 이 머신의 키를 등록할 필요가 없다.

@@ -1,0 +1,35 @@
+{
+  "_comment": "Buzz KO fleet profile. One entry per Mac; scripts read this instead of hard-coding users, routes, volumes or keys. Owner rule: builds run only on the M5 Mac Studios.",
+  "devices": {
+    "m5m1": {
+      "ssh": "m5m1@m5m1",
+      "roles": ["build", "install"],
+      "work_root": "/Volumes/Build/m5m1",
+      "sops_identity": "~/.config/sops/age/m5m1-se.txt",
+      "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup"
+    },
+    "m5m2": {
+      "ssh": "m5m2@m5m2",
+      "roles": ["build", "install"],
+      "work_root": "/Volumes/Build/m5m2",
+      "sops_identity": "~/.config/sops/age/m5m2-se.txt"
+    },
+    "m1m1": {
+      "ssh": "jeonghan@m1m1",
+      "roles": ["install"],
+      "sops_identity": "~/.config/sops/age/macbook-se.txt"
+    },
+    "m1m2": {
+      "ssh": "m1m2@m1m2",
+      "via": "m5m1",
+      "roles": ["install"],
+      "sops_identity": "~/.config/sops/age/m1m2-se.txt",
+      "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized"
+    },
+    "m1p1": {
+      "ssh": "jeonghan@m1p1",
+      "roles": ["install"],
+      "notes": "MacBook; often offline"
+    }
+  }
+}
