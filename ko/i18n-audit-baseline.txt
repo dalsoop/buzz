@@ -1,0 +1,15 @@
+app/navigation/useAppNavigation.ts	Record
+features/agents/ui/AgentDescriptionField.tsx	Fizz
+features/agents/ui/EnvVarsEditor.tsx	VARIABLE_NAME
+features/agents/ui/PersonaAdvancedFields.tsx	Birch, Compass, Ridge, Thistle
+features/agents/ui/useSnapshotSendController.ts	Parameters
+features/messages/lib/agentMentionRevalidation.ts	ReadonlySet
+features/messages/lib/mentionClipboard.ts	Jane Doe
+features/messages/lib/mentionIdentityTrust.ts	John Smith
+features/onboarding/communityOnboarding.tsx	ReturnType
+features/presence/lib/presenceSubscriptionReconciler.ts	ReturnType
+features/settings/ui/CustomHarnessForm.tsx	KEY
+features/settings/ui/HarnessesSettingsPanel.tsx	Git Bash
+features/sidebar/lib/sidebarLaneReconciler.ts	Date.now()
+features/sidebar/lib/sidebarLaneStore.ts	Record
+features/workflows/ui/WorkflowDialog.tsx	Run history

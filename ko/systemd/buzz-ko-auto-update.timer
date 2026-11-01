@@ -1,0 +1,10 @@
+[Unit]
+Description=Buzz KO weekly update (Monday 04:30 KST)
+
+[Timer]
+OnCalendar=Mon *-*-* 04:30:00 Asia/Seoul
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

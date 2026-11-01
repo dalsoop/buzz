@@ -1,0 +1,9 @@
+[Unit]
+Description=Buzz KO health check
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/buzz
+ExecStart=%h/buzz/ko/health-check.sh
+TimeoutStartSec=10m

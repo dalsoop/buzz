@@ -8,8 +8,12 @@
 """
 import json, re, sys, pathlib
 
-root = pathlib.Path(sys.argv[1])            # desktop/src
-paths = sys.argv[2:]
+args = sys.argv[1:]
+baseline = None
+if args[:1] == ["--baseline"]:
+    baseline, args = pathlib.Path(args[1]), args[2:]
+root = pathlib.Path(args[0])            # desktop/src
+paths = args[1:]
 keys = json.load(open(root / "locales/ui-keys.json"))
 ko_ui = json.load(open(root / "locales/ko.ui.json"))
 
@@ -47,6 +51,16 @@ for f in files:
         if not k or not ko_ui.get(k):
             line = src[: m.start()].count("\n") + 1
             missing.append((rel, line, s))
+
+if baseline is not None:
+    # Machine mode: one "path<TAB>text" line per finding; fail on any finding
+    # not already accepted in the baseline (known names, type params, examples).
+    found = sorted({f"{r[0]}\t{r[2]}" for r in raw + missing + data_copy})
+    known = set(baseline.read_text().splitlines()) if baseline.exists() else set()
+    new = [x for x in found if x not in known]
+    for x in new:
+        print(x)
+    sys.exit(1 if new else 0)
 
 def show(title, rows, limit=60):
     print(f"\n## {title}: {len(rows)}")

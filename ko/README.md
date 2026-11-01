@@ -100,3 +100,14 @@ ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 �
 - `ko/fleet.sh check`: 장비별 접속, 여유 공간, Buzz KO 설치·실행 여부.
 - `python3 ko/i18n-audit.py desktop/src features shared app`: `uiT()`/`t()`를 거치지 않은 영어 화면 문구와 한국어 번역이 없는 `uiT()` 문구를 찾는다. upstream 병합 뒤마다 돌린다(`pnpm i18n:check` 는 카탈로그 일관성만 본다).
 - m5m1 봇 LaunchAgent 는 비정상 종료 때만 다시 띄운다(`KeepAlive.SuccessfulExit=false`). 사용자가 종료하면 그대로 둔다.
+
+## 자동화 (pop-os systemd 사용자 타이머)
+
+| 타이머 | 언제 | 하는 일 |
+|---|---|---|
+| `buzz-ko-auto-update.timer` | 매주 월 04:30 KST | upstream 병합 → 카탈로그·타입·테스트·번역 누락 검사 → push → m5m1 테스트 빌드 → m5m1·m1m1·m1m2 설치. 실패하면 병합을 되돌리고 Buzz `사람-필요` 로 알림 |
+| `buzz-ko-health.timer` | 2시간마다 | Buzz KO 가 꺼진 장비를 Buzz `서버-알림` 으로 알림(다시 켜지면 알림 삭제), m5m1 봇 로그 5MB 넘으면 정리 |
+
+설치: `cp ko/systemd/* ~/.config/systemd/user/ && systemctl --user daemon-reload && systemctl --user enable --now buzz-ko-auto-update.timer buzz-ko-health.timer`
+로그: `journalctl --user -u buzz-ko-auto-update` / `-u buzz-ko-health`
+번역 누락 기준선: `ko/i18n-audit-baseline.txt`(알려진 고유명사·타입명). 새 항목이 정말 번역 대상이 아니면 여기에 더한다.

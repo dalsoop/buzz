@@ -1,0 +1,9 @@
+[Unit]
+Description=Buzz KO health check every 2 hours
+
+[Timer]
+OnCalendar=*-*-* 00/2:15:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

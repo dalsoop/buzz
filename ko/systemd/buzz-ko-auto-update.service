@@ -1,0 +1,9 @@
+[Unit]
+Description=Buzz KO weekly upstream merge, build and install
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/buzz
+ExecStart=%h/buzz/ko/auto-update.sh
+TimeoutStartSec=3h
