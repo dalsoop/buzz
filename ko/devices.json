@@ -10,7 +10,8 @@
       "work_root": "/Volumes/Build/m5m1",
       "internal_min_free_gb": 20,
       "sops_identity": "~/.config/sops/age/m5m1-se.txt",
-      "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup"
+      "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup",
+      "buzz_ko_pubkey": "11ca6383de36867f6827fbe18bf77c3d7cf58c8b0d2d7d739160813f898a518d"
     },
     "m5m2": {
       "ssh": "m5m2@m5m2",
@@ -37,7 +38,8 @@
         "install"
       ],
       "sops_identity": "~/.config/sops/age/m1m2-se.txt",
-      "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized"
+      "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized",
+      "buzz_ko_pubkey": "029732eca078f7d6151e203fcebc93d5521bd029cd6bd94bd527a9f65a00a006"
     },
     "m1p1": {
       "ssh": "jeonghan@m1p1",
