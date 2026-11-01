@@ -51,3 +51,9 @@ ko/build-mac.sh publish 0.5.28   # GitHub Releases(ko-v0.5.28)에 올리고 업�
 
 - 웹 페이지의 "Buzz에서 열기"·초대 링크(`buzz://`)는 공식 Buzz를 연다. Buzz KO에서는 초대 링크를 복사해 앱의 "초대 링크 또는 코드" 칸에 붙여 넣는다.
 - `BUILD_ID`(build-mac.sh)는 절대 바꾸지 않는다. 바꾸면 macOS가 다른 앱으로 인식해 데이터와 업데이트가 끊긴다.
+
+## 원격 빌드 주의 (m5m1)
+
+- m5m1의 tmux 서버는 GUI 쪽 프로세스라 외장 볼륨(`/Volumes/Build`)을 읽을 때 macOS 권한 창을 띄우고 **조용히 멈춘다** (로그 0바이트). SSH로 원격 실행할 때는 tmux 말고 `ssh m5m1 'cd … && nohup ko/build-mac.sh … > log 2>&1 &'`를 쓴다.
+- 영구 해결: m5m1에서 시스템 설정 → 개인정보 보호 및 보안 → 파일 및 폴더(또는 전체 디스크 접근)에서 `/opt/homebrew/bin/tmux`에 **이동식 볼륨** 접근을 허용한다.
+- 진행 확인은 로그 크기로 한다. 로그가 10분 넘게 그대로면 멈춘 것으로 본다.
