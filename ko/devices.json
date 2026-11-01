@@ -30,8 +30,8 @@
         "install"
       ],
       "sops_identity": "~/.config/sops/age/macbook-se.txt",
-      "buzz_ko_pubkey": "f250ccc2eb335a0728ea71eb080433334af0db4465e480d8e3d09a47c76b6517",
-      "buzz_ko_account": "owner (윤정한) — switch pending; device key still in use"
+      "buzz_ko_account": "owner 윤정한 (8d35b42a…, ranode Bitwarden owner-m5m1 BUZZ_HUMAN_JEONGHAN_*)",
+      "notes": "macOS account name is still jeonghan (full name m1m1); rename pending"
     },
     "m1m2": {
       "ssh": "m1m2@m1m2",
@@ -41,8 +41,7 @@
       ],
       "sops_identity": "~/.config/sops/age/m1m2-se.txt",
       "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized",
-      "buzz_ko_pubkey": "029732eca078f7d6151e203fcebc93d5521bd029cd6bd94bd527a9f65a00a006",
-      "buzz_ko_account": "owner (윤정한) — switch pending; device key still in use"
+      "buzz_ko_account": "owner 윤정한 (8d35b42a…, ranode Bitwarden owner-m5m1 BUZZ_HUMAN_JEONGHAN_*)"
     },
     "m1p1": {
       "ssh": "jeonghan@m1p1",
