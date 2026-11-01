@@ -38,7 +38,7 @@ UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/$LATEST_TAG/latest.
 NOTARY_PROFILE="${BUZZ_KO_NOTARY_PROFILE:-swift-app-mono}"
 SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono}"
 UPDATER_SECRET="secrets/macbook-tools/buzz-ko-tauri-updater-key.enc.yaml"
-SOPS_IDENTITY="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/macbook-se.txt}"
+SOPS_IDENTITY="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/$(hostname -s)-se.txt}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="$ROOT/ko/dist"

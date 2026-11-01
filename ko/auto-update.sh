@@ -59,6 +59,9 @@ fi
 
 (
   cd desktop
+  # Tests assert English copy; the korean branch follows the system language,
+  # and this machine's session locale is ko_KR.
+  export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
   pnpm install --frozen-lockfile >/dev/null
   pnpm -s i18n:check >/dev/null
   pnpm -s typecheck

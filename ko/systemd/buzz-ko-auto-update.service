@@ -7,3 +7,4 @@ Type=oneshot
 WorkingDirectory=%h/buzz
 ExecStart=%h/buzz/ko/auto-update.sh
 TimeoutStartSec=3h
+Environment=LANG=en_US.UTF-8
