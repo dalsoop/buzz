@@ -31,6 +31,9 @@ DEMO_NAME="KO"
 # a new value makes macOS treat the next build as a different app.
 BUILD_ID="71b620b49469dd59"
 LATEST_TAG="buzz-ko-latest"
+# The community relay Buzz KO connects to on first launch (same as the
+# official app on our Macs). Without it the app falls back to ws://localhost:3000.
+KO_RELAY_URL="${BUZZ_KO_RELAY_URL:-wss://buzz.ranode.net}"
 UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/$LATEST_TAG/latest.json"
 NOTARY_PROFILE="${BUZZ_KO_NOTARY_PROFILE:-swift-app-mono}"
 SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono}"
@@ -171,6 +174,8 @@ cmd_build() {
     cd desktop
     BUZZ_BUILD_DEMO_SLUG="$slug" \
     VITE_BUZZ_DEFAULT_LANGUAGE=ko \
+    BUZZ_RELAY_URL="$KO_RELAY_URL" \
+    BUZZ_BUILD_AUTO_CONNECT_DEFAULT_RELAY=1 \
     BUZZ_UPDATER_PUBLIC_KEY="$(cat "$UPDATER_PUB")" \
     BUZZ_UPDATER_ENDPOINT="$UPDATER_ENDPOINT" \
     CMAKE_POLICY_VERSION_MINIMUM=3.5 \
@@ -266,6 +271,8 @@ cmd_test_build() {
     cd desktop
     BUZZ_BUILD_DEMO_SLUG="$slug" \
     VITE_BUZZ_DEFAULT_LANGUAGE=ko \
+    BUZZ_RELAY_URL="$KO_RELAY_URL" \
+    BUZZ_BUILD_AUTO_CONNECT_DEFAULT_RELAY=1 \
     CMAKE_POLICY_VERSION_MINIMUM=3.5 \
       pnpm tauri build --features mesh-llm --target "$target" \
         --bundles app --no-sign --config "$config"
