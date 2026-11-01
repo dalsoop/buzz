@@ -6,8 +6,17 @@
 
 ## 처음 한 번 (빌드용 Mac)
 
-준비물: Xcode Command Line Tools, 키체인에 **Developer ID Application** 인증서,
-App Store Connect API 키(.p8) 또는 Apple ID 앱 암호, `gh auth login` 완료.
+평소 Mac 앱 릴리스와 같은 서명 체계를 쓴다.
+
+| 항목 | 출처 |
+|---|---|
+| 코드 서명 | 로그인 키체인의 `Developer ID Application` 인증서 |
+| 공증 | 기존 notarytool 키체인 프로필 `swift-app-mono` (`BUZZ_KO_NOTARY_PROFILE`로 바꿀 수 있음) |
+| 업데이트 서명 키 | Bitwarden 원본 → `principal-secrets-mono`의 `secrets/macbook-tools/buzz-ko-tauri-updater-key.enc.yaml` (필드 `value`, `password`) |
+| 업데이트 공개키 | 이 저장소의 `ko/updater.pub` |
+
+`principal-secrets-mono` 경로가 기본값(`~/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono`)과 다르면 `BUZZ_KO_SECRETS_REPO`로 지정한다.
+`sops`, `age-plugin-se`, `gh auth login`이 준비돼 있어야 한다.
 
 ```bash
 git clone https://github.com/dalsoop/buzz.git && cd buzz
@@ -15,10 +24,10 @@ git checkout korean
 ko/build-mac.sh setup
 ```
 
-`setup`이 하는 일:
-
-- `~/.buzz-ko/updater.key`에 자동 업데이트 서명 키를 만든다. **이 키를 잃으면 이미 설치된 앱이 업데이트를 못 받는다.** 따로 백업할 것.
-- 공증 자격 증명을 키체인 프로필 `buzz-ko`에 저장한다.
+`setup`은 서명 인증서와 공증 프로필을 확인한다. 업데이트 키가 아직 없으면 한 번 만들고,
+공개키를 `ko/updater.pub`에 쓴 뒤 개인키를 Bitwarden에 넣고 `environment-secret-broker sync`로
+암호문을 만들 때까지 기다린다. 임시 개인키 파일은 끝나면 지운다. `ko/updater.pub`은 커밋한다.
+**이 개인키를 잃으면 이미 설치된 앱이 업데이트를 못 받는다.**
 
 ## 릴리스할 때마다
 

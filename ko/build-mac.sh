@@ -5,11 +5,15 @@
 # build identity so Buzz KO installs beside the official Buzz without sharing
 # its bundle ID, keychain entries, deep-link scheme, nest, or CLI name.
 #
+# Signing follows the usual Mac release setup: Developer ID from the login
+# keychain, notarization through the existing "swift-app-mono" notarytool
+# profile, and the updater private key delivered by sops from
+# principal-secrets-mono (Bitwarden is the source of truth).
+#
 # One-time setup on the build Mac:
 #   ko/build-mac.sh setup
-#     - creates the Tauri updater key in ~/.buzz-ko/ (keep it; losing it means
-#       installed apps can no longer auto-update)
-#     - stores notarization credentials in the keychain profile "buzz-ko"
+#     - generates the Tauri updater key pair once, writes the public key to
+#       ko/updater.pub, and tells you how to store the private key
 #
 # Each release:
 #   ko/build-mac.sh build [version]     # build + sign + notarize -> ko/dist/
@@ -28,12 +32,14 @@ DEMO_NAME="KO"
 BUILD_ID="71b620b49469dd59"
 LATEST_TAG="buzz-ko-latest"
 UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/$LATEST_TAG/latest.json"
-KEY_DIR="$HOME/.buzz-ko"
-UPDATER_KEY="$KEY_DIR/updater.key"
-NOTARY_PROFILE="buzz-ko"
+NOTARY_PROFILE="${BUZZ_KO_NOTARY_PROFILE:-swift-app-mono}"
+SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono}"
+UPDATER_SECRET="secrets/macbook-tools/buzz-ko-tauri-updater-key.enc.yaml"
+SOPS_IDENTITY="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/macbook-se.txt}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="$ROOT/ko/dist"
+UPDATER_PUB="$ROOT/ko/updater.pub"
 cd "$ROOT"
 
 die() { echo "error: $*" >&2; exit 1; }
@@ -65,29 +71,55 @@ signing_identity() {
   echo "$identity"
 }
 
+# Decrypt one field of the updater secret. Values only ever go to stdout for
+# capture; they never reach argv, logs, or the terminal.
+updater_secret_field() {
+  SOPS_AGE_KEY_FILE="$SOPS_IDENTITY" \
+    sops decrypt --extract "[\"$1\"]" "$SECRETS_REPO/$UPDATER_SECRET"
+}
+
 cmd_setup() {
   require_macos
-  mkdir -p "$KEY_DIR" && chmod 700 "$KEY_DIR"
+  echo "Signing identity: $(signing_identity)"
+  xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null \
+    || die "notarytool keychain profile '$NOTARY_PROFILE' missing"
+  echo "Notarization profile: $NOTARY_PROFILE"
+
+  if [[ -f "$SECRETS_REPO/$UPDATER_SECRET" ]]; then
+    [[ -f "$UPDATER_PUB" ]] || die "secret exists but ko/updater.pub is missing"
+    updater_secret_field value >/dev/null || die "cannot decrypt $UPDATER_SECRET"
+    echo "Updater key: $UPDATER_SECRET (decrypts OK)"
+    echo "Setup complete."
+    return
+  fi
+
+  [[ ! -f "$UPDATER_PUB" ]] || die "ko/updater.pub exists but $UPDATER_SECRET does not"
   # shellcheck disable=SC1091
   . ./bin/activate-hermit
   (cd desktop && pnpm install --frozen-lockfile)
+  # Global so the EXIT trap still sees it after this function returns.
+  SETUP_TMP="$(mktemp -d)"
+  trap 'rm -rf "$SETUP_TMP"' EXIT
+  local tmp="$SETUP_TMP"
+  echo "Generating the Tauri updater key pair. Choose a password."
+  (cd desktop && pnpm tauri signer generate -w "$tmp/updater.key")
+  cp "$tmp/updater.key.pub" "$UPDATER_PUB"
+  cat <<EOM
 
-  if [[ -f "$UPDATER_KEY" ]]; then
-    echo "Updater key already exists: $UPDATER_KEY"
-  else
-    echo "Creating the updater signing key. Choose a password and keep it safe."
-    (cd desktop && pnpm tauri signer generate -w "$UPDATER_KEY")
-    chmod 600 "$UPDATER_KEY"
-  fi
+Public key written to ko/updater.pub — commit it on the korean branch.
 
-  echo
-  echo "Signing identity: $(signing_identity)"
-  echo
-  echo "Storing notarization credentials in keychain profile '$NOTARY_PROFILE'."
-  echo "Use an App Store Connect API key (.p8) or an Apple ID app-specific password."
-  xcrun notarytool store-credentials "$NOTARY_PROFILE"
-  echo
-  echo "Setup complete. Back up $KEY_DIR somewhere safe."
+Store the private key before this shell exits (the temp copy is deleted):
+  1. Bitwarden: new item "buzz-ko tauri updater key" with fields
+       value    = contents of $tmp/updater.key
+       password = the password you just chose
+  2. In $SECRETS_REPO:
+       environment-secret-broker sync   ->  $UPDATER_SECRET
+       (and the matching principals/sources.json entries)
+Press Enter when both are done.
+EOM
+  read -r
+  updater_secret_field value >/dev/null || die "cannot decrypt $UPDATER_SECRET yet"
+  echo "Setup complete."
 }
 
 cmd_build() {
@@ -96,14 +128,14 @@ cmd_build() {
   version="$(resolve_version "${1:-}")"
   target="$(target_triple)"
   identity="$(signing_identity)"
-  [[ -f "$UPDATER_KEY" && -f "$UPDATER_KEY.pub" ]] || die "run '$0 setup' first"
+  [[ -f "$UPDATER_PUB" ]] || die "ko/updater.pub missing; run '$0 setup' first"
   xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null \
-    || die "notarization profile '$NOTARY_PROFILE' missing; run '$0 setup'"
-  [[ -n "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" ]] || {
-    read -rsp "Updater key password: " TAURI_SIGNING_PRIVATE_KEY_PASSWORD; echo
-    export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-  }
-  export TAURI_SIGNING_PRIVATE_KEY="$UPDATER_KEY"
+    || die "notarytool keychain profile '$NOTARY_PROFILE' missing"
+  TAURI_SIGNING_PRIVATE_KEY="$(updater_secret_field value)" \
+    || die "cannot decrypt $UPDATER_SECRET; run '$0 setup' first"
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(updater_secret_field password)" \
+    || die "cannot decrypt the password field of $UPDATER_SECRET"
+  export TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
   # shellcheck disable=SC1091
   . ./bin/activate-hermit
@@ -128,7 +160,7 @@ cmd_build() {
     c.bundle = { ...c.bundle, createUpdaterArtifacts: true, macOS: { minimumSystemVersion: "10.15" } };
     c.plugins = { ...c.plugins, updater: { pubkey, endpoints: [endpoint] } };
     fs.writeFileSync(path, JSON.stringify(c, null, 2) + "\n");
-  ' "$config" "$(cat "$UPDATER_KEY.pub")" "$UPDATER_ENDPOINT"
+  ' "$config" "$(cat "$UPDATER_PUB")" "$UPDATER_ENDPOINT"
 
   cargo build --release --target "$target" \
     -p buzz-acp -p buzz-agent -p buzz-backend-kubernetes -p buzz-dev-mcp \
@@ -138,7 +170,7 @@ cmd_build() {
   (
     cd desktop
     BUZZ_BUILD_DEMO_SLUG="$slug" \
-    BUZZ_UPDATER_PUBLIC_KEY="$(cat "$UPDATER_KEY.pub")" \
+    BUZZ_UPDATER_PUBLIC_KEY="$(cat "$UPDATER_PUB")" \
     BUZZ_UPDATER_ENDPOINT="$UPDATER_ENDPOINT" \
     CMAKE_POLICY_VERSION_MINIMUM=3.5 \
     MACOSX_DEPLOYMENT_TARGET=10.15 \
