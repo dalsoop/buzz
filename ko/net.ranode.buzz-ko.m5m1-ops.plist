@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>BUZZ_SHARE_IDENTITY</key>
+		<string>1</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/bin:/bin</string>
+		<key>SOPS_AGE_KEY_FILE</key>
+		<string>/Users/m5m1/.config/sops/age/m5m1-se.txt</string>
+	</dict>
+	<key>KeepAlive</key>
+	<false/>
+	<key>Label</key>
+	<string>net.ranode.buzz-ko.m5m1-ops</string>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/sops</string>
+		<string>exec-env</string>
+		<string>/Users/m5m1/.environment-secret-broker/principal-secrets-mono/secrets/macbook-tools/buzz-m5m1-ops.enc.yaml</string>
+		<string>exec env -u pubkey_hex "/Applications/Buzz KO.app/Contents/MacOS/buzz-desktop"</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/m5m1/Library/Logs/buzz-ko/m5m1-ops.err.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/m5m1/Library/Logs/buzz-ko/m5m1-ops.log</string>
+</dict>
+</plist>

@@ -75,3 +75,22 @@ ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 �
 
 소유자 승인이 필요한 MR(예: principal-secrets-mono 의 `delivery.yaml`)은 m5m1 에서 Buzz `사람-필요` 채널로 링크와 함께 알린다
 (`agent-ops-monitor notify post --channel human-needed …`). 머지되면 같은 key 로 resolve 한다.
+
+## 계정과 키 (복구 기준)
+
+| 계정 | 쓰는 곳 | 원본 보관 | 기기 쪽 |
+|---|---|---|---|
+| 윤정한(사람) `npub1356mg25…` | m1m1·m1m2 Buzz KO | Bitwarden 보관함 항목 **"Buzz — 윤정한"** (비밀번호 = nsec) | 각 Mac 키체인 `buzz-desktop-demo.ko-71b620b49469dd59` |
+| m5m1 운영(봇) `e939ef66…` | m5m1 Buzz KO | principal-secrets-mono `secrets/macbook-tools/buzz-m5m1-ops.enc.yaml` | 디스크·키체인에 두지 않음. LaunchAgent `net.ranode.buzz-ko.m5m1-ops` 가 `sops exec-env` 로 주입 |
+
+키체인 사본은 버려도 된다. 원본은 위 두 곳뿐이다.
+
+### Mac 을 포맷했거나 Buzz KO 를 지웠을 때
+
+- **m1m1·m1m2(사람):** Buzz KO 설치 → 첫 화면 "기존 키 사용" → Bitwarden "Buzz — 윤정한" 의 비밀번호를 붙여 넣기. relay 멤버라 바로 들어간다. relay 멤버 추가는 필요 없다.
+- **m5m1(봇):**
+  1. Buzz KO 설치(`ko/fleet.sh install …`).
+  2. `~/.environment-secret-broker/principal-secrets-mono` 클론과 `~/.config/sops/age/m5m1-se.txt`(Secure Enclave 키)가 있어야 한다. Secure Enclave 키는 포맷하면 사라지므로 새로 만들고 `.sops.yaml` 의 `m5m1` 수신자를 바꾼다(소유자 승인 경로, 유비키로 다시 잠금).
+  3. `ko/net.ranode.buzz-ko.m5m1-ops.plist` 를 `~/Library/LaunchAgents/` 에 두고 `launchctl bootstrap gui/$(id -u) …`.
+  - plist 에는 `BUZZ_SHARE_IDENTITY=1` 이 있어야 한다. 없으면 키는 주입돼도 앱이 온보딩 화면(새 키 만들기/기존 키 사용)에 멈춘다.
+- **새 기기 키는 만들지 않는다.** 앱이 첫 실행에 키를 자동으로 만들어도 "기존 키 사용"으로 위 계정을 넣는다.
