@@ -11,18 +11,18 @@
       "internal_min_free_gb": 20,
       "sops_identity": "~/.config/sops/age/m5m1-se.txt",
       "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup",
-      "buzz_ko_pubkey": "11ca6383de36867f6827fbe18bf77c3d7cf58c8b0d2d7d739160813f898a518d"
+      "buzz_ko_account": "m5m1 ops bot (e939ef66…, principal-secrets-mono buzz-m5m1-ops)",
+      "launch_agent": "net.ranode.buzz-ko.m5m1-ops"
     },
     "m5m2": {
       "ssh": "m5m2@m5m2",
       "roles": [
-        "build",
-        "install"
+        "build"
       ],
       "work_root": "/Volumes/Build/m5m2",
       "internal_min_free_gb": 20,
       "sops_identity": "~/.config/sops/age/m5m2-se.txt",
-      "buzz_ko_pubkey": "d878fba90ec7e8ae882ca9a4c98d3df69d6bc44c130f796f79afcca0cc544c8b"
+      "notes": "no Buzz KO and no secret values here (principal-secrets-mono decision 0016)"
     },
     "m1m1": {
       "ssh": "jeonghan@m1m1",
@@ -30,7 +30,8 @@
         "install"
       ],
       "sops_identity": "~/.config/sops/age/macbook-se.txt",
-      "buzz_ko_pubkey": "f250ccc2eb335a0728ea71eb080433334af0db4465e480d8e3d09a47c76b6517"
+      "buzz_ko_pubkey": "f250ccc2eb335a0728ea71eb080433334af0db4465e480d8e3d09a47c76b6517",
+      "buzz_ko_account": "owner (윤정한) — switch pending; device key still in use"
     },
     "m1m2": {
       "ssh": "m1m2@m1m2",
@@ -40,7 +41,8 @@
       ],
       "sops_identity": "~/.config/sops/age/m1m2-se.txt",
       "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized",
-      "buzz_ko_pubkey": "029732eca078f7d6151e203fcebc93d5521bd029cd6bd94bd527a9f65a00a006"
+      "buzz_ko_pubkey": "029732eca078f7d6151e203fcebc93d5521bd029cd6bd94bd527a9f65a00a006",
+      "buzz_ko_account": "owner (윤정한) — switch pending; device key still in use"
     },
     "m1p1": {
       "ssh": "jeonghan@m1p1",

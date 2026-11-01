@@ -135,6 +135,8 @@ cmd_install() {
     printf '%-6s ' "$dev"
     if ! remote "$dev" <<<"true" 2>/dev/null; then echo "skipped (unreachable)"; continue; fi
     push "$dev" "$zip" "/tmp/Buzz_KO.zip"
+    local agent
+    agent="$(field "$dev" launch_agent)"
     remote "$dev" <<EOF || echo "FAILED"
 set -e
 app="/Applications/$APP_NAME.app"
@@ -147,7 +149,13 @@ mv "/tmp/buzz-ko-unzip/$APP_NAME.app" "\$app"
 xattr -dr com.apple.quarantine "\$app" 2>/dev/null || true
 rm -rf /tmp/buzz-ko-unzip /tmp/Buzz_KO.zip
 codesign --verify --deep --strict "\$app"
-open "\$app"
+# A device with a launch_agent starts Buzz KO through it (it injects the
+# account key); a plain open would fall back to a keychain device identity.
+if [ -n "$agent" ]; then
+  launchctl kickstart -k "gui/\$(id -u)/$agent"
+else
+  open "\$app"
+fi
 for i in \$(seq 1 20); do pgrep -f "\$app/Contents/MacOS/" >/dev/null && break; sleep 1; done
 pgrep -f "\$app/Contents/MacOS/" >/dev/null && echo "installed, running" || echo "installed, NOT running"
 EOF
