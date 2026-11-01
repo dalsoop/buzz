@@ -46,15 +46,19 @@ EOF
 }
 
 # Run a bash script (stdin) on a device, hopping through "via" when set.
+# The whole script is read into a temp file before it runs, with stdin from
+# /dev/null, so a command inside it that reads stdin (colima ssh, ssh) cannot
+# swallow the rest of the script.
+REMOTE_RUNNER='f=$(mktemp); cat >"$f"; bash "$f" </dev/null; rc=$?; rm -f "$f"; exit $rc'
 remote() {
   local dev="$1" target via
   target="$(field "$dev" ssh)"
   via="$(field "$dev" via)"
   if [[ -n "$via" ]]; then
     ssh -o BatchMode=yes -o ConnectTimeout=10 "$(field "$via" ssh)" \
-      "ssh -o BatchMode=yes -o ConnectTimeout=10 $target bash -s"
+      "ssh -o BatchMode=yes -o ConnectTimeout=10 $target $(printf '%q' "$REMOTE_RUNNER")"
   else
-    ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" bash -s
+    ssh -o BatchMode=yes -o ConnectTimeout=10 "$target" "$REMOTE_RUNNER"
   fi
 }
 

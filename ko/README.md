@@ -94,3 +94,9 @@ ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 �
   3. `ko/net.ranode.buzz-ko.m5m1-ops.plist` 를 `~/Library/LaunchAgents/` 에 두고 `launchctl bootstrap gui/$(id -u) …`.
   - plist 에는 `BUZZ_SHARE_IDENTITY=1` 이 있어야 한다. 없으면 키는 주입돼도 앱이 온보딩 화면(새 키 만들기/기존 키 사용)에 멈춘다.
 - **새 기기 키는 만들지 않는다.** 앱이 첫 실행에 키를 자동으로 만들어도 "기존 키 사용"으로 위 계정을 넣는다.
+
+## 운영 점검
+
+- `ko/fleet.sh check`: 장비별 접속, 여유 공간, Buzz KO 설치·실행 여부.
+- `python3 ko/i18n-audit.py desktop/src features shared app`: `uiT()`/`t()`를 거치지 않은 영어 화면 문구와 한국어 번역이 없는 `uiT()` 문구를 찾는다. upstream 병합 뒤마다 돌린다(`pnpm i18n:check` 는 카탈로그 일관성만 본다).
+- m5m1 봇 LaunchAgent 는 비정상 종료 때만 다시 띄운다(`KeepAlive.SuccessfulExit=false`). 사용자가 종료하면 그대로 둔다.
