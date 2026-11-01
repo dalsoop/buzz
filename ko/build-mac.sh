@@ -170,6 +170,7 @@ cmd_build() {
   (
     cd desktop
     BUZZ_BUILD_DEMO_SLUG="$slug" \
+    VITE_BUZZ_DEFAULT_LANGUAGE=ko \
     BUZZ_UPDATER_PUBLIC_KEY="$(cat "$UPDATER_PUB")" \
     BUZZ_UPDATER_ENDPOINT="$UPDATER_ENDPOINT" \
     CMAKE_POLICY_VERSION_MINIMUM=3.5 \
@@ -241,6 +242,49 @@ cmd_build() {
   ls -1 "$DIST"
 }
 
+# Unsigned-for-distribution build for trying Buzz KO on our own Macs: ad-hoc
+# signature, no notarization, no updater. Same identity as the real build, so
+# a later signed install replaces it in place.
+cmd_test_build() {
+  require_macos
+  local target product app config identity_json slug
+  target="$(target_triple)"
+  # shellcheck disable=SC1091
+  . ./bin/activate-hermit
+  just desktop-install-ci
+
+  config="$(mktemp "${TMPDIR:-/tmp}/buzz-ko-config.XXXXXX")"
+  identity_json="$(node desktop/scripts/demo-build-config.mjs "$DEMO_NAME" "$config" "$BUILD_ID")"
+  slug="$(node -e 'console.log(JSON.parse(process.argv[1]).slug)' "$identity_json")"
+  product="$(node -e 'console.log(JSON.parse(process.argv[1]).productName)' "$identity_json")"
+
+  cargo build --release --target "$target" \
+    -p buzz-acp -p buzz-agent -p buzz-backend-kubernetes -p buzz-dev-mcp \
+    -p git-credential-nostr -p buzz-cli
+  ./scripts/bundle-sidecars.sh "$target"
+  (
+    cd desktop
+    BUZZ_BUILD_DEMO_SLUG="$slug" \
+    VITE_BUZZ_DEFAULT_LANGUAGE=ko \
+    CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      pnpm tauri build --features mesh-llm --target "$target" \
+        --bundles app --no-sign --config "$config"
+  )
+  rm -f "$config"
+
+  app="desktop/src-tauri/target/$target/release/bundle/macos/$product.app"
+  [[ -d "$app" ]] || die "app bundle not found: $app"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $product" "$app/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleName $product" "$app/Contents/Info.plist"
+  codesign --force --deep --sign - "$app"
+  codesign --verify --deep --strict "$app"
+
+  mkdir -p "$ROOT/ko/dist-test"
+  rm -f "$ROOT/ko/dist-test/Buzz_KO_test.zip"
+  ditto -c -k --keepParent "$app" "$ROOT/ko/dist-test/Buzz_KO_test.zip"
+  echo "Built $ROOT/ko/dist-test/Buzz_KO_test.zip"
+}
+
 cmd_publish() {
   local version tag
   version="$(resolve_version "${1:-}")"
@@ -266,6 +310,7 @@ cmd_publish() {
 case "${1:-}" in
   setup) cmd_setup ;;
   build) cmd_build "${2:-}" ;;
+  test-build) cmd_test_build ;;
   publish) cmd_publish "${2:-}" ;;
-  *) echo "Usage: $0 setup | build [version] | publish [version]" >&2; exit 2 ;;
+  *) echo "Usage: $0 setup | build [version] | test-build | publish [version]" >&2; exit 2 ;;
 esac
