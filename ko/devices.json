@@ -21,7 +21,8 @@
       ],
       "work_root": "/Volumes/Build/m5m2",
       "internal_min_free_gb": 20,
-      "sops_identity": "~/.config/sops/age/m5m2-se.txt"
+      "sops_identity": "~/.config/sops/age/m5m2-se.txt",
+      "buzz_ko_pubkey": "d878fba90ec7e8ae882ca9a4c98d3df69d6bc44c130f796f79afcca0cc544c8b"
     },
     "m1m1": {
       "ssh": "jeonghan@m1m1",
