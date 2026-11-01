@@ -1,4 +1,7 @@
-import buzzAppIcon from "@/assets/app-icon@3x.png";
+import { BeeField } from "./BeeField";
+import buzzMark from "@/assets/invite/mark.svg";
+import "./invite-page.css";
+import { InviteCommunity } from "./InviteCommunity";
 import { claimInviteInBrowser } from "@/features/invite/invite-api";
 import {
   BUZZ_RELEASES_URL,
@@ -30,6 +33,12 @@ function inviteClaimErrorMessage(
   message: string,
   t: (key: string) => string,
 ): string {
+  if (message.includes("invite_restricted")) {
+    return t("invite.restricted");
+  }
+  if (message.includes("invite_owner_mismatch")) {
+    return t("invite.ownerMismatch");
+  }
   if (message.includes("invite_exhausted")) {
     return t("invite.exhausted");
   }
@@ -71,7 +80,7 @@ export function InvitePage({ code }: { code: string }) {
       if (!active) return;
       if (
         platform.operatingSystem === "macos" &&
-        platform.architecture === "unknown"
+        platform.architecture !== "arm64"
       ) {
         setNeedsMacChoice(true);
         return;
@@ -190,24 +199,14 @@ export function InvitePage({ code }: { code: string }) {
   }, [closeMacChoice, showMacChoice]);
 
   return (
-    <div
-      className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center"
-      style={{
-        backgroundImage: "linear-gradient(180deg, #D7D72E 0%, #D7E7F6 100%)",
-      }}
-    >
-      <div className="w-full max-w-xl space-y-4">
-        <div className="flex w-full flex-col items-center rounded-3xl bg-white px-6 py-10 sm:px-12 sm:py-12">
-          <div
-            className="h-12 w-12 overflow-hidden bg-black"
-            style={{ borderRadius: "22.37%" }}
-          >
-            <img alt="Buzz" className="h-full w-full" src={buzzAppIcon} />
-          </div>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-black">
-            {t("invite.invitedTo")}
-          </h1>
-          <p className="mt-9 font-mono text-lg text-black/70">{host}</p>
+    <div className="invite-page">
+      <BeeField count={24} sizeScale={0.75} zIndex={-1} />
+      <img className="invite-mark" src={buzzMark} alt="Buzz" />
+      <div className="invite-stack">
+        <div className="invite-card">
+          <h1>{t("invite.title")}</h1>
+          <p className="invite-intro">{t("invite.intro")}</p>
+          <InviteCommunity relay={relay} host={host} />
 
           <div
             className={`grid w-full max-w-md overflow-hidden transition-[grid-template-rows,margin,opacity,transform] duration-[220ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
@@ -230,7 +229,7 @@ export function InvitePage({ code }: { code: string }) {
             </div>
           </div>
 
-          <div className="mt-9 w-full max-w-md space-y-2">
+          <div className="invite-actions space-y-2">
             {browserSigningAvailable ? (
               <Button
                 className="h-10 w-full bg-black text-white hover:bg-black/90 focus-visible:ring-black disabled:cursor-not-allowed disabled:bg-black/30 disabled:text-white/70"
@@ -277,7 +276,7 @@ export function InvitePage({ code }: { code: string }) {
             ) : null}
           </div>
         </div>
-        <p className="flex h-[3.125rem] items-center justify-center rounded-2xl bg-white text-sm text-black/60">
+        <p className="invite-download">
           {t("invite.noApp")}{" "}
           <a
             aria-expanded={needsMacChoice ? showMacChoice : undefined}
@@ -293,18 +292,7 @@ export function InvitePage({ code }: { code: string }) {
               setShowMacChoice(true);
             }}
           >
-            {t("invite.downloadNow")}
-          </a>
-          <span aria-hidden="true" className="mx-1.5 text-black/30">
-            ·
-          </span>
-          <a
-            className="font-medium text-black underline-offset-4 hover:text-black/70 hover:underline focus-visible:underline"
-            href={BUZZ_RELEASES_URL}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {t("invite.browseReleases")}
+            {t("invite.downloadBuzz")}
           </a>
         </p>
       </div>
@@ -351,28 +339,10 @@ export function InvitePage({ code }: { code: string }) {
                 }
               >
                 <strong className="block text-lg">
-                  {t("invite.macNewer")}
+                  {t("invite.macAppleSilicon")}
                 </strong>
                 <span className="mt-1 block text-sm">
-                  {t("invite.macNewerDetail")}
-                </span>
-              </a>
-              <a
-                aria-disabled={choosingMacDownload}
-                className="rounded-2xl border border-black p-5 text-black no-underline hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black aria-disabled:pointer-events-none aria-disabled:opacity-50"
-                href={BUZZ_RELEASES_URL}
-                onClick={(event) =>
-                  void chooseMacDownload(event, {
-                    operatingSystem: "macos",
-                    architecture: "x64",
-                  })
-                }
-              >
-                <strong className="block text-lg">
-                  {t("invite.macOlder")}
-                </strong>
-                <span className="mt-1 block text-sm">
-                  {t("invite.macOlderDetail")}
+                  {t("invite.macAppleSiliconDetail")}
                 </span>
               </a>
             </div>

@@ -167,7 +167,7 @@ export function EncryptedBackupProvider({
       if (isSaving) return;
       setIsSaving(true);
       setSaveError(null);
-      toast("Saving backup…", {
+      toast(uiT("Saving backup…"), {
         get description() {
           return uiT("The download window will open when it’s ready.");
         },

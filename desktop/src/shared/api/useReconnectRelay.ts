@@ -1,3 +1,4 @@
+import { uiT } from "@/shared/i18n/uiTranslation";
 /**
  * React binding for the relay reconnect controller.
  *
@@ -70,7 +71,7 @@ export function useReconnectRelay(): {
   }, [queryClient]);
 
   onBackstopRef.current = React.useCallback(() => {
-    toast("Still trying to reconnect — check your network.");
+    toast(uiT("Still trying to reconnect — check your network."));
   }, []);
 
   const reconnect = React.useCallback(async () => {

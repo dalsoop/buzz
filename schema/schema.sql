@@ -125,6 +125,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 \i tables/public/entity_deletion_approvals.sql
 \i tables/public/entity_deletion_requests.sql
 \i tables/public/entity_deletion_stage_history.sql
+\i tables/public/user_deletion_fences.sql
 \i tables/public/community_deletion_approvals.sql
 \i tables/public/community_deletion_checkpoints.sql
 \i tables/public/community_deletion_manifest_keys.sql
@@ -200,6 +201,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 \i seeds/entity_deletion_approvals.sql
 \i seeds/entity_deletion_requests.sql
 \i seeds/entity_deletion_stage_history.sql
+\i seeds/user_deletion_fences.sql
 \i seeds/community_deletion_approvals.sql
 \i seeds/community_deletion_checkpoints.sql
 \i seeds/community_deletion_manifest_keys.sql
@@ -213,3 +215,5 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 \i seeds/operator_listener_outbox.sql
 \i seeds/relay_operator_audit.sql
 \i seeds/storage_accounting_snapshots.sql
+
+\i tables/public/nip_fi_profile_heads.sql

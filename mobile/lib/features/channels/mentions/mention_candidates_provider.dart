@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../shared/agents/owned_agent_directory.dart';
 import '../../../shared/crypto/nip_oa.dart';
 import '../../../shared/identity_names/identity_names.dart';
 import '../../../shared/identity_names/identity_names_provider.dart';
@@ -159,12 +160,12 @@ final mentionCandidatesProvider = Provider.family
           ref.watch(agentDirectoryProvider).asData?.value ??
           const <AgentDirectoryEntry>[];
       final owners = ref.watch(agentOwnersProvider).asData?.value ?? const {};
+      // Null while loading or failed: nothing is known to be unlisted.
+      final ownedAgents = ref.watch(ownedAgentDirectoryProvider).asData?.value;
       final channels = channelsAsync.asData?.value ?? const <Channel>[];
       final userCache = ref.watch(userCacheProvider);
       final currentPubkey = ref.watch(currentPubkeyProvider);
-      final channel = channels
-          .where((candidate) => candidate.id == args.channelId)
-          .firstOrNull;
+      final channel = ref.watch(channelByIdProvider(args.channelId));
       // Archived channels take no mentions.
       if (channel?.isArchived == true) return const [];
       final directory = channel?.mentionsOutsidePeople ?? false;
@@ -184,6 +185,10 @@ final mentionCandidatesProvider = Provider.family
           ownerByAgentPubkey: owners,
           searchResults: searchResults,
           currentPubkey: currentPubkey,
+          ownedAgents: ownedAgents,
+          // Desktop offers the owner's agents where they can be added.
+          offerOwnedAgents:
+              channel != null && (channel.isStream || channel.isForum),
         ))
           if (isMentionKey(candidate.pubkey)) candidate,
       ];
@@ -260,9 +265,7 @@ IdentityNames mentionPickerNames(
 /// section 2). Archived channels never search.
 final mentionSearchFailedProvider = Provider.family
     .autoDispose<bool, MentionChooserArgs>((ref, args) {
-      final channel = (ref.watch(channelsProvider).asData?.value ?? const [])
-          .where((candidate) => candidate.id == args.channelId)
-          .firstOrNull;
+      final channel = ref.watch(channelByIdProvider(args.channelId));
       if (channel == null ||
           channel.isArchived ||
           !channel.mentionsOutsidePeople) {

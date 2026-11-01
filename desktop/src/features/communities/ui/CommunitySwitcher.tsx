@@ -160,13 +160,8 @@ export function CommunitySwitcher({
   }
 
   function handleProfileMenuOpenChange(nextOpen: boolean) {
-    if (variant !== "profile-menu") {
-      setDropdownOpen(nextOpen);
-      return;
-    }
-    if (!nextOpen) {
-      clearProfileMenuHoverTimer();
-    }
+    // Explicit actions take precedence over an earlier pointer transition.
+    clearProfileMenuHoverTimer();
     setDropdownOpen(nextOpen);
   }
 
@@ -192,7 +187,7 @@ export function CommunitySwitcher({
       const result = await onLeaveCommunity(activeCommunity.id);
       setDropdownOpen(false);
       if (result?.status === "already-absent") {
-        toast("Community removed", {
+        toast(uiT("Community removed"), {
           get description() {
             return uiT(
               "You were no longer a member, so Buzz removed the community from this device.",
@@ -328,7 +323,7 @@ export function CommunitySwitcher({
                 <button
                   className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 focus-visible:outline-none"
                   onClick={() => {
-                    setDropdownOpen(false);
+                    handleProfileMenuOpenChange(false);
                     void writeTextToClipboard(activeCommunity.relayUrl);
                   }}
                   role="menuitem"
@@ -341,7 +336,7 @@ export function CommunitySwitcher({
                   <button
                     className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 focus-visible:outline-none"
                     onClick={() => {
-                      setDropdownOpen(false);
+                      handleProfileMenuOpenChange(false);
                       onInvite();
                     }}
                     role="menuitem"
@@ -354,7 +349,7 @@ export function CommunitySwitcher({
                 <button
                   className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 focus-visible:outline-none"
                   onClick={() => {
-                    setDropdownOpen(false);
+                    handleProfileMenuOpenChange(false);
                     setEditingCommunity(activeCommunity);
                   }}
                   role="menuitem"
@@ -379,7 +374,7 @@ export function CommunitySwitcher({
                   className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-destructive outline-hidden transition-colors hover:bg-destructive/10 focus:bg-destructive/10 focus:outline-none focus-visible:bg-destructive/10 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
                   disabled={isLeaving}
                   onClick={() => {
-                    setDropdownOpen(false);
+                    handleProfileMenuOpenChange(false);
                     setRemovingCommunity(activeCommunity);
                   }}
                   role="menuitem"
@@ -402,7 +397,7 @@ export function CommunitySwitcher({
             <button
               className="flex min-h-9 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-muted/50 focus:bg-muted/50 focus:outline-none focus-visible:bg-muted/50 focus-visible:outline-none"
               onClick={() => {
-                setDropdownOpen(false);
+                handleProfileMenuOpenChange(false);
                 onAddCommunity();
               }}
               role="menuitem"

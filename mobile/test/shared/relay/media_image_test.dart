@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:buzz/shared/relay/media_auth.dart';
 import 'package:buzz/shared/relay/media_image.dart';
@@ -70,6 +71,33 @@ void main() {
     });
   });
 
+  group('relayThumbnailUrl', () {
+    final hash = 'ab' * 32;
+    final auth = _auth();
+
+    test('maps relay blobs of any format to the thumbnail', () {
+      for (final ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif', '']) {
+        expect(
+          relayThumbnailUrl('$_relayBase/media/$hash$ext', auth),
+          '$_relayBase/media/$hash.thumb.jpg',
+        );
+      }
+    });
+
+    test('leaves everything else alone', () {
+      for (final url in [
+        'https://elsewhere.example/media/$hash.jpg',
+        '$_relayBase/media/$hash.thumb.jpg',
+        '$_relayBase/media/$hash.jpg?v=2',
+        '$_relayBase/media/not-a-hash.jpg',
+        '$_relayBase/avatars/$hash.jpg',
+        '$_relayBase/media/$hash.JPG',
+      ]) {
+        expect(relayThumbnailUrl(url, auth), isNull, reason: url);
+      }
+    });
+  });
+
   group('MediaImageProvider cache identity', () {
     test('equal url + same auth service => equal keys', () {
       final auth = _auth(nsec: nostr.Keys.generate().nsec);
@@ -111,6 +139,60 @@ void main() {
   });
 
   group('MediaImageProvider fetching', () {
+    test(
+      'oversized image streams abort before decode and preserve the client',
+      () async {
+        for (final declared in [true, false]) {
+          var cancelled = false;
+          var aborted = false;
+          var delivered = false;
+          final controller = StreamController<List<int>>(
+            onCancel: () => cancelled = true,
+          );
+          final client = _StreamingClient((request) async {
+            if (request.url.path.endsWith('valid.png')) {
+              return http.StreamedResponse(Stream.value(_pngBytes), 200);
+            }
+            (request as http.AbortableRequest).abortTrigger!.then((_) {
+              aborted = true;
+            });
+            // Never finish: the loader must stop as soon as the cap is crossed.
+            controller.add(Uint8List(MediaImageProvider.maxResponseBytes));
+            controller.add([0]);
+            return http.StreamedResponse(
+              controller.stream,
+              200,
+              contentLength: declared
+                  ? MediaImageProvider.maxResponseBytes + 1
+                  : null,
+            );
+          });
+          final provider = MediaImageProvider(
+            url: 'https://avatar.example/$declared.png',
+            auth: _auth(),
+            client: client,
+            onBytesLoaded: (_) => delivered = true,
+          );
+          final error = await _waitError(
+            provider.resolve(ImageConfiguration.empty),
+          ).timeout(const Duration(seconds: 2));
+          expect(error, isA<FormatException>());
+          expect(cancelled, isTrue);
+          expect(aborted, isTrue);
+          expect(delivered, isFalse);
+          await controller.close();
+          await _wait(
+            MediaImageProvider(
+              url: 'https://avatar.example/valid.png',
+              auth: _auth(),
+              client: client,
+            ).resolve(ImageConfiguration.empty),
+          );
+          PaintingBinding.instance.imageCache.clear();
+        }
+      },
+    );
+
     test('resolves one fetch for repeated resolves of the same key', () async {
       var fetches = 0;
       final client = http_testing.MockClient((request) async {
@@ -128,6 +210,29 @@ void main() {
         final completer = provider.resolve(ImageConfiguration.empty);
         await _wait(completer);
       }
+      expect(fetches, 1);
+    });
+
+    test('one URL shown at two decode sizes downloads once', () async {
+      var fetches = 0;
+      final response = Completer<void>();
+      final client = http_testing.MockClient((request) async {
+        fetches += 1;
+        await response.future;
+        return http.Response.bytes(_pngBytes, 200);
+      });
+      final auth = _auth(nsec: nostr.Keys.generate().nsec);
+      ImageStream resolveAt(int width) => ResizeImage(
+        MediaImageProvider(url: _mediaUrl, auth: auth, client: client),
+        width: width,
+      ).resolve(ImageConfiguration.empty);
+
+      final small = _wait(resolveAt(40));
+      final large = _wait(resolveAt(120));
+      await pumpEventQueue();
+      response.complete();
+      await Future.wait([small, large]);
+
       expect(fetches, 1);
     });
 
@@ -241,4 +346,12 @@ Future<Object?> _waitError(ImageStream stream) async {
   } catch (e) {
     return e;
   }
+}
+
+class _StreamingClient extends http.BaseClient {
+  _StreamingClient(this.respond);
+  final Future<http.StreamedResponse> Function(http.BaseRequest) respond;
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      respond(request);
 }

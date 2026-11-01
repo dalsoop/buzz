@@ -72,13 +72,10 @@
     "tooLarge": "File is {{size}}, over the {{limit}} preview limit. Use the Download button above to save it."
   },
   "invite": {
-    "invitedTo": "You're invited to",
     "joinInBrowser": "Join in browser",
     "joining": "Joining…",
     "acceptInBuzz": "Accept invite in Buzz",
     "noApp": "Don't have the app?",
-    "downloadNow": "Download it now",
-    "browseReleases": "Browse releases",
     "claimFailed": "Could not claim this invite.",
     "exhausted": "This invite has reached its use limit. Ask for a new invite.",
     "expired": "This invite has expired. Ask for a new invite.",
@@ -89,11 +86,14 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "macTitle": "Which Mac do you have?",
-    "macSubtitle": "Choose based on when your Mac was released.",
-    "macNewer": "Newer Mac",
-    "macNewerDetail": "2021 or later, or a late-2020 Mac with an Apple M1 chip",
-    "macOlder": "Older Mac",
-    "macOlderDetail": "2019 or earlier, or a 2020 Mac with an Intel processor",
-    "macHelp": "<strong>Not sure?</strong> Open the Apple menu and choose <strong>About This Mac</strong>. “Chip: Apple M…” means Newer Mac. “Processor: Intel” means Older Mac."
+    "macHelp": "<strong>Not sure?</strong> Open the Apple menu and choose <strong>About This Mac</strong>. “Chip: Apple M…” means Apple Silicon Mac. “Processor: Intel” means this Mac is not supported.",
+    "title": "You're invited",
+    "intro": "Join your community on Buzz.",
+    "restricted": "This account, or the account that owns it, is restricted in this community. Contact a community administrator. If the restriction is temporary, try again after it ends.",
+    "ownerMismatch": "This account does not match its recorded owner. Use the correct account or owner identity to join this community.",
+    "downloadBuzz": "Download Buzz",
+    "macSubtitle": "Buzz for Mac requires Apple Silicon. Intel Macs are not supported.",
+    "macAppleSilicon": "Apple Silicon Mac",
+    "macAppleSiliconDetail": "Mac with an Apple M-series chip"
   }
 }

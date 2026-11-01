@@ -70,8 +70,9 @@ double frostedAppBarHeight(
   TextStyle? titleStyle,
   double titleContentHeight = 0,
   bool nativeLargeTitle = false,
+  bool useNativeNavigation = true,
 }) {
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
+  if (useNativeNavigation && defaultTargetPlatform == TargetPlatform.iOS) {
     return MediaQuery.paddingOf(context).top +
         IosNavigationMetrics.of(context).compactHeight +
         (nativeLargeTitle
@@ -172,10 +173,16 @@ class FrostedAppBar extends StatelessWidget {
   /// Reactive counterpart avatar and presence badge for a native DM title.
   final IosNavigationAction? nativeTitleAvatar;
   final Color? nativeTitlePresenceColor;
+
+  /// Shows a refresh bar in the native iOS title capsule.
+  final bool nativeTitleRefreshing;
   final VoidCallback? onNativeTitlePressed;
 
   /// Whether UIKit should expand the title at the top of the page.
   final bool nativeLargeTitle;
+
+  /// Use the composable frosted header for custom title and filter layouts.
+  final bool useNativeNavigation;
 
   /// Duration for coordinated native header and overlapping control movement.
   final Duration nativeLayoutDuration;
@@ -199,8 +206,10 @@ class FrostedAppBar extends StatelessWidget {
     this.nativeEphemeralLabel,
     this.nativeTitleAvatar,
     this.nativeTitlePresenceColor,
+    this.nativeTitleRefreshing = false,
     this.onNativeTitlePressed,
     this.nativeLargeTitle = false,
+    this.useNativeNavigation = true,
     this.nativeLayoutDuration = Duration.zero,
     this.nativeLeading,
     this.nativeActions,
@@ -225,7 +234,7 @@ class FrostedAppBar extends StatelessWidget {
     this.frostedBlurSigma = 20,
     this.showBottomDivider = true,
     this.bottomDividerOpacity = 0.05,
-  }) : assert(bottom == null || bottomHeight > 0),
+  }) : assert(bottom == null || bottomHeight + bottomOverlap > 0),
        assert(bottomOverlap >= 0),
        assert(bottom != null || bottomOverlap == 0),
        assert(frostedBlurSigma >= 0),
@@ -244,7 +253,9 @@ class FrostedAppBar extends StatelessWidget {
   }
 
   Widget _build(BuildContext context, bool nativeSuppressed) {
-    if (defaultTargetPlatform == TargetPlatform.iOS && !nativeSuppressed) {
+    if (useNativeNavigation &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        !nativeSuppressed) {
       final offset = IosNavigationScrollScope.maybeOf(context);
       Widget buildNative(double scrollOffset) {
         // Scrolling tracks the finger directly; only the search focus change
@@ -283,6 +294,7 @@ class FrostedAppBar extends StatelessWidget {
                   ephemeralLabel: nativeEphemeralLabel,
                   titleAvatar: nativeTitleAvatar,
                   titlePresenceColor: nativeTitlePresenceColor,
+                  titleRefreshing: nativeTitleRefreshing,
                   onTitlePressed: onNativeTitlePressed,
                   largeTitle: nativeLargeTitle,
                   alwaysFrosted: alwaysFrosted,
@@ -417,7 +429,7 @@ class FrostedAppBar extends StatelessWidget {
         ),
       ),
     );
-    final contentBody = bottom != null && bottomOverlap > 0
+    final contentBody = bottom != null
         ? SizedBox(
             height: barContentHeight + bottomHeight,
             child: Stack(
@@ -433,13 +445,7 @@ class FrostedAppBar extends StatelessWidget {
               ],
             ),
           )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              titleRow,
-              if (bottom != null) SizedBox(height: bottomHeight, child: bottom),
-            ],
-          );
+        : titleRow;
 
     final content = DirectionalTransitionMotion(
       transformKey: const ValueKey(
@@ -598,6 +604,7 @@ IosNavigationAction? _nativeAction(Widget? widget) {
   if (widget is IosGlassNavigationButton) {
     final symbol = switch (widget.icon) {
       IosGlassNavigationIcon.more => 'ellipsis',
+      IosGlassNavigationIcon.trash => 'trash',
       IosGlassNavigationIcon.reply => 'arrowshape.turn.up.left',
       IosGlassNavigationIcon.back => 'chevron.backward',
       IosGlassNavigationIcon.close => 'xmark',

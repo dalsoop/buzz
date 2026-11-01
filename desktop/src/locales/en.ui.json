@@ -4280,5 +4280,9 @@
   "m6c61dd0357caa5d1": "{{p0}}d",
   "m1815ae76cdc7bf9b": "Not deployed",
   "m85a39ab345d672ff": "Yes",
-  "m1ea442a134b2a184": "No"
+  "m1ea442a134b2a184": "No",
+  "m5206d125e4898781": "This account, or the account that owns it, is restricted in this community. Contact a community administrator. If the restriction is temporary, try again after it ends.",
+  "m317ded12be9f6d1a": "This account does not match its recorded owner. Use the correct account or owner identity to join this community.",
+  "mceb6cf327ce2817e": "This invite code has expired — ask for a new one.",
+  "me9aba3e4e87a4a34": "This invite has reached its use limit. Ask for a new invite."
 }

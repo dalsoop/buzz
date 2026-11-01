@@ -1553,5 +1553,9 @@
   "is set under Advanced → Environment variables.": "은(는) 고급 → 환경 변수에 저장되어 있습니다.",
   "discussed {0} in": "{0}을(를) 논의한 채널:",
   "created {0} from": "{0}을(를) 만든 채널:",
-  "Per-agent env vars. Override the template's vars on collision.": "이 에이전트의 환경 변수입니다. 템플릿과 이름이 겹치면 이 값이 우선합니다."
+  "Per-agent env vars. Override the template's vars on collision.": "이 에이전트의 환경 변수입니다. 템플릿과 이름이 겹치면 이 값이 우선합니다.",
+  "This account, or the account that owns it, is restricted in this community. Contact a community administrator. If the restriction is temporary, try again after it ends.": "이 계정이나 이 계정의 소유 계정이 이 커뮤니티에서 제한된 상태입니다. 커뮤니티 관리자에게 문의하세요. 일시적인 제한이라면 끝난 뒤 다시 시도하세요.",
+  "This account does not match its recorded owner. Use the correct account or owner identity to join this community.": "이 계정이 기록된 소유자와 맞지 않습니다. 올바른 계정이나 소유자 신원으로 참여하세요.",
+  "This invite code has expired — ask for a new one.": "초대 코드가 만료됐습니다. 새 초대를 요청하세요.",
+  "This invite has reached its use limit. Ask for a new invite.": "이 초대는 사용 한도에 도달했습니다. 새 초대를 요청하세요."
 }

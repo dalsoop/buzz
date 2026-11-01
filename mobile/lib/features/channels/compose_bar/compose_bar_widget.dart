@@ -245,14 +245,14 @@ class ComposeBar extends HookConsumerWidget {
               .cachedMembersForChannel(channelId);
     final currentPubkey = ref.watch(currentPubkeyProvider);
     final userCache = ref.watch(userCacheProvider);
-    final isDmChannel =
-        channelsAsync.asData?.value.any((c) => c.id == channelId && c.isDm) ??
-        false;
+    final composeChannel = ref.watch(channelByIdProvider(channelId));
+    final isDmChannel = composeChannel?.isDm ?? false;
 
     // Preload profiles for channel members, mentionable agents, and their
     // owners so @mention suggestions show names ("managed by …" included).
     final relayAgents = ref.watch(agentDirectoryProvider).asData?.value;
     final agentOwners = ref.watch(agentOwnersProvider).asData?.value;
+    final ownedAgents = ref.watch(ownedAgentDirectoryProvider).asData?.value;
     final agentMentionLabels = _agentMentionLabels(bindings: mentionMap.value);
     final agentMentionLabelsKey = (agentMentionLabels.toList()..sort()).join(
       '\u0000',
@@ -552,6 +552,10 @@ class ComposeBar extends HookConsumerWidget {
             userCache: userCache,
             ownerByAgentPubkey: agentOwners ?? const {},
             currentPubkey: currentPubkey,
+            ownedAgents: ownedAgents,
+            offerOwnedAgents:
+                composeChannel != null &&
+                (composeChannel.isStream || composeChannel.isForum),
             // Reuse ordinary search-result classification, not membership as
             // permission. Persisted keys/flags themselves prove no role.
             searchResults: [
@@ -562,7 +566,10 @@ class ComposeBar extends HookConsumerWidget {
           ),
         );
       } on FormatException catch (error) {
-        messenger?.showSnackBar(SnackBar(content: Text(error.message)));
+        messenger?.showFeedbackSnackBar(
+          SnackBar(content: Text(error.message)),
+          kind: ToastKind.error,
+        );
         return;
       }
       final outgoing = _OutgoingMentions(selectedMentions);
@@ -580,17 +587,14 @@ class ComposeBar extends HookConsumerWidget {
         );
       } catch (_) {
         // Nothing was sent and the draft is untouched, so Retry sends it again.
-        messenger?.showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Message not sent: could not check who is in this channel',
-            ),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: () => unawaited(send()),
-            ),
-          ),
-        );
+        if (context.mounted) {
+          showBuzzToast(
+            context,
+            'Not sent. Couldn’t check members.',
+            kind: ToastKind.error,
+            onRetry: () => unawaited(send()),
+          );
+        }
         return;
       }
 
@@ -914,7 +918,7 @@ class ComposeBar extends HookConsumerWidget {
                     .read(mediaUploadServiceProvider)
                     .pickGalleryImages();
                 queueImages(photos);
-              }, errorMessage: 'Unable to open your photo library.'),
+              }, errorMessage: 'Couldn’t open photo library'),
               onVideo: () => chooseAttachment(() {
                 final service = ref.read(mediaUploadServiceProvider);
                 return pickThenQueue(
