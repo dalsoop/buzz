@@ -21,15 +21,15 @@
       ],
       "work_root": "/Volumes/Build/m5m2",
       "internal_min_free_gb": 20,
-      "sops_identity": "~/.config/sops/age/m5m2-se.txt",
-      "buzz_ko_pubkey": "f250ccc2eb335a0728ea71eb080433334af0db4465e480d8e3d09a47c76b6517"
+      "sops_identity": "~/.config/sops/age/m5m2-se.txt"
     },
     "m1m1": {
       "ssh": "jeonghan@m1m1",
       "roles": [
         "install"
       ],
-      "sops_identity": "~/.config/sops/age/macbook-se.txt"
+      "sops_identity": "~/.config/sops/age/macbook-se.txt",
+      "buzz_ko_pubkey": "f250ccc2eb335a0728ea71eb080433334af0db4465e480d8e3d09a47c76b6517"
     },
     "m1m2": {
       "ssh": "m1m2@m1m2",
