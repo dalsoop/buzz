@@ -5,6 +5,7 @@
       "ssh": "m5m1@m5m1",
       "roles": ["build", "install"],
       "work_root": "/Volumes/Build/m5m1",
+      "internal_min_free_gb": 20,
       "sops_identity": "~/.config/sops/age/m5m1-se.txt",
       "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup"
     },
@@ -12,6 +13,7 @@
       "ssh": "m5m2@m5m2",
       "roles": ["build", "install"],
       "work_root": "/Volumes/Build/m5m2",
+      "internal_min_free_gb": 20,
       "sops_identity": "~/.config/sops/age/m5m2-se.txt"
     },
     "m1m1": {

@@ -90,8 +90,19 @@ EOF
 
 cmd_job() {
   local dev="$1" name="$2"; shift 2
-  local cmd="$*"
+  local cmd="$*" root min
+  root="$(field "$dev" work_root)"
+  min="$(field "$dev" internal_min_free_gb)"
+  # Keep temp files and download caches off the internal disk.
+  if [[ -n "$root" ]]; then
+    cmd="export TMPDIR=$root/cache/tmp CARGO_HOME=$root/cache/cargo npm_config_store_dir=$root/cache/pnpm-store npm_config_cache=$root/cache/npm HERMIT_STATE_DIR=$root/cache/hermit; mkdir -p \$TMPDIR; $cmd"
+  fi
   remote "$dev" <<EOF
+free_gb=\$(df -g / | awk 'NR==2{print \$4}')
+if [ -n "$min" ] && [ "\$free_gb" -lt "$min" ]; then
+  echo "refused: internal disk has \${free_gb}GB free, below ${min}GB" >&2
+  exit 3
+fi
 log=/tmp/fleet-$name.log
 : > "\$log"
 nohup bash -lc $(printf '%q' "export PATH=/opt/homebrew/bin:\$HOME/.cargo/bin:\$PATH; $cmd; echo EXIT=\$?") >> "\$log" 2>&1 < /dev/null &
