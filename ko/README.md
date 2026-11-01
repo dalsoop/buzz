@@ -70,3 +70,8 @@ ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 �
 ```
 
 `via`가 있는 장비(예: m1m2)는 그 장비를 거쳐 접속하므로 이 머신의 키를 등록할 필요가 없다.
+
+## 승인 요청
+
+소유자 승인이 필요한 MR(예: principal-secrets-mono 의 `delivery.yaml`)은 m5m1 에서 Buzz `사람-필요` 채널로 링크와 함께 알린다
+(`agent-ops-monitor notify post --channel human-needed …`). 머지되면 같은 key 로 resolve 한다.
