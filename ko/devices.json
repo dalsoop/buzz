@@ -31,13 +31,12 @@
       "notes": "no Buzz KO and no secret values here (principal-secrets-mono decision 0016)"
     },
     "m1m1": {
-      "ssh": "jeonghan@m1m1",
+      "ssh": "m1m1@m1m1",
       "roles": [
         "install"
       ],
       "sops_identity": "~/.config/sops/age/macbook-se.txt",
-      "buzz_ko_account": "owner 윤정한 (8d35b42a…, ranode Bitwarden owner-m5m1 BUZZ_HUMAN_JEONGHAN_*)",
-      "notes": "macOS account name is still jeonghan (full name m1m1); rename pending"
+      "buzz_ko_account": "owner 윤정한 (8d35b42a…, ranode Bitwarden owner-m5m1 BUZZ_HUMAN_JEONGHAN_*)"
     },
     "m1m2": {
       "ssh": "m1m2@m1m2",
@@ -46,7 +45,7 @@
         "install"
       ],
       "sops_identity": "~/.config/sops/age/m1m2-se.txt",
-      "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized",
+      "notes": "only reachable through m5m1 or m1m1; this host's key is not authorized. ~/.ssh/config still says User jeonghan for m1m1 (renamed 2026-11-02): fix with the m1m1 Host blocks -> User m1m1",
       "buzz_ko_account": "owner 윤정한 (8d35b42a…, ranode Bitwarden owner-m5m1 BUZZ_HUMAN_JEONGHAN_*)"
     },
     "m1p1": {
