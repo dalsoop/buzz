@@ -91,7 +91,7 @@ ko/fleet.sh install Buzz_KO.zip           # roles에 install이 있는 모든 �
 - **m5m1(봇):**
   1. Buzz KO 설치(`ko/fleet.sh install …`).
   2. `~/.environment-secret-broker/principal-secrets-mono` 클론과 `~/.config/sops/age/m5m1-se.txt`(Secure Enclave 키)가 있어야 한다. Secure Enclave 키는 포맷하면 사라지므로 새로 만들고 `.sops.yaml` 의 `m5m1` 수신자를 바꾼다(소유자 승인 경로, 유비키로 다시 잠금).
-  3. `ko/net.ranode.buzz-ko.m5m1-ops.plist` 를 `~/Library/LaunchAgents/` 에 두고 `launchctl bootstrap gui/$(id -u) …`.
+  3. `ko/fleet.sh install-agent m5m1` (devices.json 의 launch_agent·buzz_ko_secret·sops_identity 로 `ko/launch-agent.plist.tmpl` 을 그려 등록).
   - plist 에는 `BUZZ_SHARE_IDENTITY=1` 이 있어야 한다. 없으면 키는 주입돼도 앱이 온보딩 화면(새 키 만들기/기존 키 사용)에 멈춘다.
 - **새 기기 키는 만들지 않는다.** 앱이 첫 실행에 키를 자동으로 만들어도 "기존 키 사용"으로 위 계정을 넣는다.
 

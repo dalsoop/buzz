@@ -5,25 +5,23 @@
 # For every device with a buzz_ko_account in ko/devices.json:
 #   - reachable but Buzz KO not running  → Buzz 서버-알림 notice
 #     (key buzz-ko/down/<device>), resolved once it runs again;
-#   - unreachable → only m5m1 alerts (it is always on); Mac laptops/minis that
-#     are off or asleep are not an incident.
-# Also keeps the m5m1 bot's stderr log under 5 MB (one rotated copy).
+#   - unreachable → only devices marked always_on alert; Macs that are off or
+#     asleep are not an incident.
+# Also keeps each LaunchAgent's stderr log under 5 MB (one rotated copy).
 
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-ALWAYS_ON=(m5m1)
-
 notify() { # notify <post|resolve> <key> [title] [body]
-  local action="$1" key="$2" title="${3:-}" body="${4:-}" cmd
-  if [[ "$action" == resolve ]]; then
-    cmd="agent-ops-monitor notify resolve --key $key --json"
+  if [[ "$1" == resolve ]]; then
+    ko/fleet.sh notify resolve "$2" || true
   else
-    cmd="agent-ops-monitor notify post --key $key --channel server-alerts --title $(printf %q "$title") --body $(printf %q "$body") --json"
+    ko/fleet.sh notify post "$2" server-alerts "$3" "$4" || true
   fi
-  ko/fleet.sh run m5m1 "export PATH=/opt/homebrew/bin:\$HOME/.local/bin:\$PATH; $cmd >/dev/null" || true
 }
+
+field() { python3 -c 'import json,sys; print(json.load(open("ko/devices.json"))["devices"][sys.argv[1]].get(sys.argv[2], ""))' "$1" "$2"; }
 
 devices="$(python3 -c '
 import json
@@ -38,17 +36,19 @@ for dev in $devices; do
   echo "$dev: $state"
   case "$state" in
     running) notify resolve "$key" ;;
-    stopped) notify post "$key" "Buzz KO 꺼짐: $dev" "$dev 에서 Buzz KO 가 실행 중이 아닙니다. 다시 켜기: ko/fleet.sh install 또는 앱 실행(m5m1 은 launchctl kickstart gui/\$(id -u)/net.ranode.buzz-ko.m5m1-ops)." ;;
+    stopped) notify post "$key" "Buzz KO 꺼짐: $dev" "$dev 에서 Buzz KO 가 실행 중이 아닙니다. 다시 켜기: 앱을 직접 실행하거나, LaunchAgent 가 있는 장비는 ko/fleet.sh install-agent $dev." ;;
     unreachable)
-      if [[ " ${ALWAYS_ON[*]} " == *" $dev "* ]]; then
-        notify post "$key" "Buzz KO 장비 연결 안 됨: $dev" "pop-os 에서 $dev 로 SSH 가 되지 않습니다. 장비 전원·네트워크를 확인하세요."
+      if [[ "$(field "$dev" always_on)" == True ]]; then
+        notify post "$key" "Buzz KO 장비 연결 안 됨: $dev" "$(hostname -s) 에서 $dev 로 SSH 가 되지 않습니다. 장비 전원·네트워크를 확인하세요."
       fi ;;
   esac
 done
 
-ko/fleet.sh run m5m1 '
-  f="$HOME/Library/Logs/buzz-ko/m5m1-ops.err.log"
-  if [ -f "$f" ] && [ "$(stat -f %z "$f")" -gt 5242880 ]; then
-    cp "$f" "$f.1" && : > "$f" && echo "rotated m5m1 bot log"
-  fi
-' || true
+for dev in $devices; do
+  [[ -n "$(field "$dev" launch_agent)" ]] || continue
+  ko/fleet.sh run "$dev" '
+    for f in "$HOME"/Library/Logs/buzz-ko/*.err.log; do
+      [ -f "$f" ] && [ "$(stat -f %z "$f")" -gt 5242880 ] && cp "$f" "$f.1" && : > "$f" && echo "rotated $f"
+    done
+  ' 2>/dev/null || true
+done

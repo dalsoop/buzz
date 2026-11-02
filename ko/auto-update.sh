@@ -3,7 +3,8 @@
 # buzz-ko-auto-update.timer:
 #
 #   merge upstream/main into korean → catalog, type, test and untranslated-copy
-#   checks → push → test build on m5m1 → install on every Buzz KO device.
+#   checks → push → signed, notarized build on the release device → install on
+#   every "install" device (all from ko/devices.json).
 #
 # Nothing is pushed, built or installed when a step fails; the failure goes to
 # the Buzz 사람-필요 channel (key buzz-ko/auto-update) and the merge is undone.
@@ -17,16 +18,18 @@ export PATH="$HOME/.local/bin:$PATH"
 LOG_DIR="$HOME/.local/state/buzz-ko"
 mkdir -p "$LOG_DIR"
 NOTICE_KEY="buzz-ko/auto-update"
-INSTALL_DEVICES=(m5m1 m1m1 m1m2)
+BUILD_HOST="$(ko/fleet.sh role release)"
+WORKDIR="$(ko/fleet.sh workdir "$BUILD_HOST")"
+mapfile -t INSTALL_DEVICES < <(ko/fleet.sh list install)
 
 push_git() { git -c credential.helper= -c credential.helper='!gh auth git-credential' push -q "$@"; }
 
 notify() { # notify <post|resolve> [title] [body]
-  local action="$1" title="${2:-}" body="${3:-}"
-  if [[ "$action" == resolve ]]; then
-    ko/fleet.sh run m5m1 "export PATH=/opt/homebrew/bin:\$HOME/.local/bin:\$PATH; agent-ops-monitor notify resolve --key $NOTICE_KEY --json >/dev/null" || true
+  if [[ "$1" == resolve ]]; then
+    ko/fleet.sh notify resolve "$NOTICE_KEY" || true
   else
-    ko/fleet.sh run m5m1 "export PATH=/opt/homebrew/bin:\$HOME/.local/bin:\$PATH; agent-ops-monitor notify post --key $NOTICE_KEY --channel human-needed --title $(printf %q "$title") --body $(printf %q "$body") --link 'ssh jeonghan@pop-os journalctl --user -u buzz-ko-auto-update' --json >/dev/null" || true
+    ko/fleet.sh notify post "$NOTICE_KEY" human-needed "$2" "$3" \
+      "ssh $(whoami)@$(hostname -s) journalctl --user -u buzz-ko-auto-update" || true
   fi
 }
 
@@ -74,12 +77,13 @@ new_copy="$(cd desktop/src && python3 ../../ko/i18n-audit.py --baseline ../../ko
 git commit -q --amend -s --no-edit
 push_git origin korean || fail "push 실패" "korean 브랜치를 포크에 올리지 못했습니다."
 
-ko/fleet.sh job m5m1 ko-auto "cd /Volumes/Build/m5m1/buzz-ko && git fetch -q origin && git checkout -q korean && git reset -q --hard origin/korean && ko/build-mac.sh test-build" \
-  || fail "빌드 시작 실패" "m5m1 에서 빌드를 시작하지 못했습니다(내장 디스크 여유 부족일 수 있습니다)."
-ko/fleet.sh wait m5m1 ko-auto || fail "빌드 실패" "m5m1 테스트 빌드가 실패했거나 멈췄습니다. 로그: m5m1:/tmp/fleet-ko-auto.log"
+ko/fleet.sh job "$BUILD_HOST" ko-auto "cd $WORKDIR && git fetch -q origin && git checkout -q korean && git reset -q --hard origin/korean && ko/build-mac.sh build" \
+  || fail "빌드 시작 실패" "$BUILD_HOST 에서 빌드를 시작하지 못했습니다(내장 디스크 여유 부족일 수 있습니다)."
+ko/fleet.sh wait "$BUILD_HOST" ko-auto || fail "빌드 실패" "$BUILD_HOST 정식 빌드(서명·공증)가 실패했거나 멈췄습니다. 로그: $BUILD_HOST:/tmp/fleet-ko-auto.log"
 
-zip="$LOG_DIR/Buzz_KO_test.zip"
-ko/fleet.sh fetch m5m1 /Volumes/Build/m5m1/buzz-ko/ko/dist-test/Buzz_KO_test.zip "$zip"
+zip="$LOG_DIR/Buzz_KO.zip"
+remote_zip="$(ko/fleet.sh run "$BUILD_HOST" "ls -1 $WORKDIR/ko/dist/Buzz_KO_*.zip | head -1")"
+ko/fleet.sh fetch "$BUILD_HOST" "$remote_zip" "$zip"
 ko/fleet.sh install "$zip" "${INSTALL_DEVICES[@]}"
 
 notify resolve

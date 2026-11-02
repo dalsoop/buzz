@@ -36,7 +36,8 @@ LATEST_TAG="buzz-ko-latest"
 # official app on our Macs). Without it the app falls back to ws://localhost:3000.
 KO_RELAY_URL="${BUZZ_KO_RELAY_URL:-wss://buzz.ranode.net}"
 UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/$LATEST_TAG/latest.json"
-SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono}"
+# The clone own-device run keeps at origin/main (ko/devices.json secrets_clone).
+SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/.environment-secret-broker/principal-secrets-mono}"
 UPDATER_SECRET="secrets/macbook-tools/buzz-ko-tauri-updater-key.enc.yaml"
 SIGNING_SECRET="secrets/macbook-tools/developer-id-application.enc.yaml"
 NOTARY_SECRET="secrets/macbook-tools/app-store-connect-api-key.enc.yaml"
@@ -184,7 +185,17 @@ cmd_build() {
   arch="${target%%-*}"; [[ "$arch" == "x86_64" ]] && arch=x64
   rm -rf "$DIST" && mkdir -p "$DIST"
   dmg="$DIST/Buzz_KO_${version}_${arch}.dmg"
-  VOL_NAME="$product" desktop/scripts/package-macos-dmg.sh "$app" "$dmg"
+  # The styled DMG needs `hdiutil attach`, which macOS refuses outside a GUI
+  # session (SSH, timers). Fall back to a plain drag-to-Applications image.
+  if ! VOL_NAME="$product" desktop/scripts/package-macos-dmg.sh "$app" "$dmg"; then
+    echo "styled DMG unavailable here; building a plain one"
+    local stage
+    stage="$(mktemp -d)"
+    ditto "$app" "$stage/$product.app"
+    ln -s /Applications "$stage/Applications"
+    hdiutil create -quiet -volname "$product" -srcfolder "$stage" -format UDZO -ov "$dmg"
+    rm -rf "$stage"
+  fi
   rcodesign sign --pem-file "$keys/signing-key.pem" --pem-file "$keys/signing-cert.pem" "$dmg"
 
   echo "Notarizing (this can take several minutes)…"
@@ -197,6 +208,9 @@ cmd_build() {
   # Staple the app too, so the updater archive passes Gatekeeper offline.
   xcrun stapler staple "$app"
   spctl --assess --type execute --verbose=4 "$app"
+
+  # Plain zip of the stapled app for ko/fleet.sh install.
+  ditto -c -k --keepParent "$app" "$DIST/Buzz_KO_${version}_${arch}.zip"
 
   # Updater archive from the signed, stapled app, signed with the updater key.
   local archive="$DIST/Buzz_KO_${version}_${arch}.app.tar.gz"

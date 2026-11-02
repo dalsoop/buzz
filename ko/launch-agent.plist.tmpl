@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Rendered by `ko/fleet.sh install-agent <device>` from ko/devices.json.
+     Runs Buzz KO as the device's account: sops exec-env decrypts the account
+     file and passes only BUZZ_PRIVATE_KEY to the app. BUZZ_SHARE_IDENTITY=1
+     makes the app accept that injected identity instead of onboarding. -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>@LABEL@</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/sops</string>
+		<string>exec-env</string>
+		<string>@SECRET_FILE@</string>
+		<string>exec env -u pubkey_hex "/Applications/Buzz KO.app/Contents/MacOS/buzz-desktop"</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>BUZZ_SHARE_IDENTITY</key>
+		<string>1</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/bin:/bin</string>
+		<key>SOPS_AGE_KEY_FILE</key>
+		<string>@SOPS_IDENTITY@</string>
+	</dict>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>@HOME@/Library/Logs/buzz-ko/@LABEL@.err.log</string>
+	<key>StandardOutPath</key>
+	<string>@HOME@/Library/Logs/buzz-ko/@LABEL@.log</string>
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+</dict>
+</plist>

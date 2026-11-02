@@ -1,10 +1,14 @@
 {
-  "_comment": "Buzz KO fleet profile. One entry per Mac; scripts read this instead of hard-coding users, routes, volumes or keys. Owner rule: builds run only on the M5 Mac Studios.",
+  "_comment": "Buzz KO fleet profile. One entry per Mac; scripts read this instead of hard-coding hosts, routes, volumes, keys or roles. Roles: build (may compile; owner rule: M5 Mac Studios only), release (holds signing/notary/updater secrets: the one release build host), notify (posts Buzz notices), install (gets Buzz KO). always_on: an unreachable device is an incident. buzz_ko_account: the account the device's Buzz KO runs as (devices without one get no Buzz KO). launch_agent + buzz_ko_secret: the account key is injected from that principal-secrets-mono file by a LaunchAgent rendered from ko/launch-agent.plist.tmpl. Jobs refuse to start below internal_min_free_gb and keep temp files and download caches under <work_root>/cache. secrets_clone: the principal-secrets-mono clone each device keeps synced (own-device run); app_dir: the Buzz KO checkout under a build device's work_root.",
+  "secrets_clone": "~/.environment-secret-broker/principal-secrets-mono",
+  "app_dir": "buzz-ko",
   "devices": {
     "m5m1": {
       "ssh": "m5m1@m5m1",
       "roles": [
         "build",
+        "release",
+        "notify",
         "install"
       ],
       "work_root": "/Volumes/Build/m5m1",
@@ -12,7 +16,9 @@
       "sops_identity": "~/.config/sops/age/m5m1-se.txt",
       "notes": "tmux server is GUI-domain and stalls on /Volumes/Build; run remote jobs with ssh + nohup",
       "buzz_ko_account": "m5m1 ops bot (e939ef66…, principal-secrets-mono buzz-m5m1-ops)",
-      "launch_agent": "net.ranode.buzz-ko.m5m1-ops"
+      "launch_agent": "net.ranode.buzz-ko.m5m1-ops",
+      "always_on": true,
+      "buzz_ko_secret": "secrets/macbook-tools/buzz-m5m1-ops.enc.yaml"
     },
     "m5m2": {
       "ssh": "m5m2@m5m2",

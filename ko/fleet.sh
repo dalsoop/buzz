@@ -10,6 +10,11 @@
 #   ko/fleet.sh fetch <device> <remote> <local>
 #   ko/fleet.sh install <Buzz_KO.zip> [device…]
 #                                          install on every "install" device
+#   ko/fleet.sh role <role>                the one device holding a role
+#   ko/fleet.sh workdir <device>           its Buzz KO checkout (work_root/app_dir)
+#   ko/fleet.sh install-agent <device>     render + load its Buzz KO LaunchAgent
+#   ko/fleet.sh notify post <key> <channel> <title> <body> [link]
+#   ko/fleet.sh notify resolve <key>       Buzz notices, sent from the notify device
 #
 # Devices with "via" are reached through that device (nested ssh), so this
 # host never needs its key authorized there.
@@ -33,6 +38,18 @@ if d is None:
 v = d.get(key, "")
 print(" ".join(v) if isinstance(v, list) else v)
 EOF
+}
+
+top() { # top <key> -> top-level value from devices.json
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))' "$DEVICES" "$1"
+}
+
+role() { # role <role> -> the single device with that role
+  local found
+  found="$(names "$1")"
+  [[ -n "$found" ]] || die "no device has role $1"
+  [[ "$(wc -l <<<"$found")" -eq 1 ]] || die "more than one device has role $1: $(echo $found)"
+  echo "$found"
 }
 
 names() { # names [role]
@@ -166,13 +183,67 @@ EOF
   done
 }
 
+cmd_workdir() {
+  local root
+  root="$(field "$1" work_root)"
+  [[ -n "$root" ]] || die "$1 has no work_root"
+  echo "$root/$(top app_dir)"
+}
+
+cmd_notify() { # notify post <key> <channel> <title> <body> [link] | notify resolve <key>
+  local action="$1" key="$2" cmd
+  if [[ "$action" == resolve ]]; then
+    cmd="agent-ops-monitor notify resolve --key $(printf %q "$key") --json"
+  else
+    cmd="agent-ops-monitor notify post --key $(printf %q "$key") --channel $(printf %q "$3") --title $(printf %q "$4") --body $(printf %q "$5")"
+    [[ -z "${6:-}" ]] || cmd+=" --link $(printf %q "$6")"
+    cmd+=" --json"
+  fi
+  remote "$(role notify)" <<<"export PATH=/opt/homebrew/bin:\$HOME/.local/bin:\$PATH; $cmd >/dev/null"
+}
+
+# Render ko/launch-agent.plist.tmpl for a device and (re)load it there.
+cmd_install_agent() {
+  local dev="$1" label secret identity clone
+  label="$(field "$dev" launch_agent)"
+  secret="$(field "$dev" buzz_ko_secret)"
+  identity="$(field "$dev" sops_identity)"
+  clone="$(top secrets_clone)"
+  [[ -n "$label" && -n "$secret" && -n "$identity" ]] \
+    || die "$dev needs launch_agent, buzz_ko_secret and sops_identity in devices.json"
+  push "$dev" "$ROOT/ko/launch-agent.plist.tmpl" "/tmp/buzz-ko-agent.tmpl"
+  remote "$dev" <<SCRIPT
+set -e
+expand() { case "\$1" in "~/"*) echo "\$HOME/\${1#\~/}";; *) echo "\$1";; esac; }
+secret_file="\$(expand $(printf %q "$clone"))/$secret"
+sops_id="\$(expand $(printf %q "$identity"))"
+[ -f "\$secret_file" ] || { echo "missing \$secret_file" >&2; exit 1; }
+[ -f "\$sops_id" ] || { echo "missing \$sops_id" >&2; exit 1; }
+dst="\$HOME/Library/LaunchAgents/$label.plist"
+mkdir -p "\$HOME/Library/Logs/buzz-ko"
+sed -e "s|@LABEL@|$label|g" -e "s|@HOME@|\$HOME|g" \
+    -e "s|@SECRET_FILE@|\$secret_file|g" -e "s|@SOPS_IDENTITY@|\$sops_id|g" \
+    /tmp/buzz-ko-agent.tmpl > "\$dst.new"
+rm -f /tmp/buzz-ko-agent.tmpl
+plutil -lint "\$dst.new" >/dev/null
+launchctl bootout "gui/\$(id -u)/$label" 2>/dev/null || true
+mv "\$dst.new" "\$dst"
+launchctl bootstrap "gui/\$(id -u)" "\$dst"
+echo "loaded $label on \$(hostname -s)"
+SCRIPT
+}
+
 case "${1:-}" in
   check) cmd_check ;;
+  role) role "$2" ;;
+  workdir) cmd_workdir "$2" ;;
+  notify) shift; cmd_notify "$@" ;;
+  install-agent) cmd_install_agent "$2" ;;
   list) names "${2:-}" ;;
   run) dev="$2"; shift 2; remote "$dev" <<<"$*" ;;
   job) shift; cmd_job "$@" ;;
   wait) cmd_wait "$2" "$3" ;;
   fetch) dev="$2"; remote "$dev" <<<"cat $(printf '%q' "$3")" > "$4" ;;
   install) shift; cmd_install "$@" ;;
-  *) sed -n '2,15p' "$0"; exit 2 ;;
+  *) sed -n '2,20p' "$0"; exit 2 ;;
 esac
