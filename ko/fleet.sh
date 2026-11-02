@@ -8,6 +8,7 @@
 #   ko/fleet.sh wait <device> <name>       wait for a job; fails if its log
 #                                          stops growing for 10 minutes
 #   ko/fleet.sh fetch <device> <remote> <local>
+#   ko/fleet.sh copy <device> <local> <remote>   large file, resumable (rsync)
 #   ko/fleet.sh install <Buzz_KO.zip> [device…]
 #                                          install on every "install" device
 #   ko/fleet.sh role <role>                the one device holding a role
@@ -94,15 +95,27 @@ push() {
 }
 
 # Copy a large file to a device, resuming partial transfers (up to 10 tries).
+# A "via" device is a real second hop, not ssh -J: only the via device's key is
+# authorized on the target, so the file lands on the via device first and is
+# rsynced onward from there.
+SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15"
 sync_file() {
-  local dev="$1" src="$2" dst="$3" target via jump=() i
+  local dev="$1" src="$2" dst="$3" target via i
   target="$(field "$dev" ssh)"
   via="$(field "$dev" via)"
-  [[ -z "$via" ]] || jump=(-J "$(field "$via" ssh)")
+  if [[ -n "$via" ]]; then
+    sync_file "$via" "$src" "$dst" || return 1
+    remote "$via" <<SCRIPT
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  rsync -q --partial --inplace --checksum -e "ssh $SSH_OPTS" $(printf %q "$dst") $(printf %q "$target:$dst") && exit 0
+  sleep 20
+done
+exit 1
+SCRIPT
+    return
+  fi
   for i in 1 2 3 4 5 6 7 8 9 10; do
-    rsync -q --partial --inplace --checksum \
-      -e "ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 ${jump[*]}" \
-      "$src" "$target:$dst" && return 0
+    rsync -q --partial --inplace --checksum -e "ssh $SSH_OPTS" "$src" "$target:$dst" && return 0
     sleep 20
   done
   return 1
@@ -261,5 +274,6 @@ case "${1:-}" in
   wait) cmd_wait "$2" "$3" ;;
   fetch) dev="$2"; remote "$dev" <<<"cat $(printf '%q' "$3")" > "$4" ;;
   install) shift; cmd_install "$@" ;;
+  copy) sync_file "$2" "$3" "$4" ;;
   *) sed -n '2,20p' "$0"; exit 2 ;;
 esac
