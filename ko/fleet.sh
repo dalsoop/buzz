@@ -93,6 +93,21 @@ push() {
   fi
 }
 
+# Copy a large file to a device, resuming partial transfers (up to 10 tries).
+sync_file() {
+  local dev="$1" src="$2" dst="$3" target via jump=() i
+  target="$(field "$dev" ssh)"
+  via="$(field "$dev" via)"
+  [[ -z "$via" ]] || jump=(-J "$(field "$via" ssh)")
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    rsync -q --partial --inplace --checksum \
+      -e "ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 ${jump[*]}" \
+      "$src" "$target:$dst" && return 0
+    sleep 20
+  done
+  return 1
+}
+
 cmd_check() {
   local dev
   for dev in $(names); do
@@ -155,7 +170,8 @@ cmd_install() {
   for dev in "${devs[@]}"; do
     printf '%-6s ' "$dev"
     if ! remote "$dev" <<<"true" 2>/dev/null; then echo "skipped (unreachable)"; continue; fi
-    push "$dev" "$zip" "/tmp/Buzz_KO.zip"
+    # Large files over a relayed link drop; resume with rsync --partial.
+    sync_file "$dev" "$zip" "/tmp/Buzz_KO.zip" || { echo "FAILED (transfer)"; continue; }
     local agent
     agent="$(field "$dev" launch_agent)"
     remote "$dev" <<EOF || echo "FAILED"
