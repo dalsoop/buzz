@@ -5,15 +5,16 @@
 # build identity so Buzz KO installs beside the official Buzz without sharing
 # its bundle ID, keychain entries, deep-link scheme, nest, or CLI name.
 #
-# Signing follows the usual Mac release setup: Developer ID from the login
-# keychain, notarization through the existing "swift-app-mono" notarytool
-# profile, and the updater private key delivered by sops from
-# principal-secrets-mono (Bitwarden is the source of truth).
+# Signing follows the unattended Mac release setup (no keychain, so it works
+# over SSH and from timers): every key comes from principal-secrets-mono via
+# sops, is written only to a 0600 file in a 0700 temp dir for the one command
+# that needs it, and is removed when the build ends.
+#   - code signing: rcodesign with developer-id-application (PEM key + cert)
+#   - notarization: notarytool --key with app-store-connect-api-key
+#   - updater:      buzz-ko-tauri-updater-key (public half is ko/updater.pub)
 #
-# One-time setup on the build Mac:
-#   ko/build-mac.sh setup
-#     - generates the Tauri updater key pair once, writes the public key to
-#       ko/updater.pub, and tells you how to store the private key
+# Check the build host once:
+#   ko/build-mac.sh setup     # every secret decrypts and the tools are there
 #
 # Each release:
 #   ko/build-mac.sh build [version]     # build + sign + notarize -> ko/dist/
@@ -35,9 +36,10 @@ LATEST_TAG="buzz-ko-latest"
 # official app on our Macs). Without it the app falls back to ws://localhost:3000.
 KO_RELAY_URL="${BUZZ_KO_RELAY_URL:-wss://buzz.ranode.net}"
 UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/$LATEST_TAG/latest.json"
-NOTARY_PROFILE="${BUZZ_KO_NOTARY_PROFILE:-swift-app-mono}"
 SECRETS_REPO="${BUZZ_KO_SECRETS_REPO:-$HOME/Documents/workspace/gitlab-saas/gujoai/infra/principal-secrets-mono}"
 UPDATER_SECRET="secrets/macbook-tools/buzz-ko-tauri-updater-key.enc.yaml"
+SIGNING_SECRET="secrets/macbook-tools/developer-id-application.enc.yaml"
+NOTARY_SECRET="secrets/macbook-tools/app-store-connect-api-key.enc.yaml"
 SOPS_IDENTITY="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/$(hostname -s)-se.txt}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -66,74 +68,45 @@ resolve_version() {
   echo "$version"
 }
 
-signing_identity() {
-  local identity
-  identity="$(security find-identity -v -p codesigning \
-    | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)"
-  [[ -n "$identity" ]] || die "keychain has no 'Developer ID Application' certificate"
-  echo "$identity"
-}
-
-# Decrypt one field of the updater secret. Values only ever go to stdout for
-# capture; they never reach argv, logs, or the terminal.
-updater_secret_field() {
+# Decrypt one field of a principal-secrets-mono value file to stdout. Callers
+# capture it or redirect it into a private temp file; it never reaches argv,
+# logs, or the terminal.
+secret_field() { # secret_field <value-file> <field>
   SOPS_AGE_KEY_FILE="$SOPS_IDENTITY" \
-    sops decrypt --extract "[\"$1\"]" "$SECRETS_REPO/$UPDATER_SECRET"
+    sops decrypt --extract "[\"$2\"]" "$SECRETS_REPO/$1"
 }
+updater_secret_field() { secret_field "$UPDATER_SECRET" "$1"; }
+
+# A 0700 directory holding this build's key files; removed on exit.
+private_dir() {
+  [[ -n "${KEY_DIR:-}" ]] || { KEY_DIR="$(mktemp -d)"; chmod 700 "$KEY_DIR"; }
+  echo "$KEY_DIR"
+}
+cleanup_keys() { [[ -z "${KEY_DIR:-}" ]] || rm -rf "$KEY_DIR"; }
 
 cmd_setup() {
   require_macos
-  echo "Signing identity: $(signing_identity)"
-  xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null \
-    || die "notarytool keychain profile '$NOTARY_PROFILE' missing"
-  echo "Notarization profile: $NOTARY_PROFILE"
-
-  if [[ -f "$SECRETS_REPO/$UPDATER_SECRET" ]]; then
-    [[ -f "$UPDATER_PUB" ]] || die "secret exists but ko/updater.pub is missing"
-    updater_secret_field value >/dev/null || die "cannot decrypt $UPDATER_SECRET"
-    echo "Updater key: $UPDATER_SECRET (decrypts OK)"
-    echo "Setup complete."
-    return
-  fi
-
-  [[ ! -f "$UPDATER_PUB" ]] || die "ko/updater.pub exists but $UPDATER_SECRET does not"
-  # shellcheck disable=SC1091
-  . ./bin/activate-hermit
-  (cd desktop && pnpm install --frozen-lockfile)
-  # Global so the EXIT trap still sees it after this function returns.
-  SETUP_TMP="$(mktemp -d)"
-  trap 'rm -rf "$SETUP_TMP"' EXIT
-  local tmp="$SETUP_TMP"
-  echo "Generating the Tauri updater key pair. Choose a password."
-  (cd desktop && pnpm tauri signer generate -w "$tmp/updater.key")
-  cp "$tmp/updater.key.pub" "$UPDATER_PUB"
-  cat <<EOM
-
-Public key written to ko/updater.pub — commit it on the korean branch.
-
-Store the private key before this shell exits (the temp copy is deleted):
-  1. Bitwarden: new item "buzz-ko tauri updater key" with fields
-       value    = contents of $tmp/updater.key
-       password = the password you just chose
-  2. In $SECRETS_REPO:
-       environment-secret-broker sync   ->  $UPDATER_SECRET
-       (and the matching principals/sources.json entries)
-Press Enter when both are done.
-EOM
-  read -r
-  updater_secret_field value >/dev/null || die "cannot decrypt $UPDATER_SECRET yet"
+  local f field
+  for f in "$UPDATER_SECRET:value" "$SIGNING_SECRET:private_key_pem" "$SIGNING_SECRET:certificate_pem" \
+           "$NOTARY_SECRET:p8" "$NOTARY_SECRET:key_id" "$NOTARY_SECRET:issuer_id"; do
+    field="${f##*:}"; f="${f%:*}"
+    secret_field "$f" "$field" >/dev/null || die "cannot decrypt $f#$field (identity $SOPS_IDENTITY)"
+    echo "ok  $f#$field"
+  done
+  [[ -f "$UPDATER_PUB" ]] || die "ko/updater.pub missing"
+  [[ "$(updater_secret_field pubkey)" == "$(tr -d '\n' < "$UPDATER_PUB")" ]] \
+    || die "ko/updater.pub does not match $UPDATER_SECRET#pubkey"
+  command -v rcodesign >/dev/null || die "rcodesign not on PATH"
+  xcrun notarytool --version >/dev/null || die "notarytool missing"
   echo "Setup complete."
 }
 
 cmd_build() {
   require_macos
-  local version target identity product app_dir app dmg arch config
+  local version target product app_dir app dmg arch config keys
   version="$(resolve_version "${1:-}")"
   target="$(target_triple)"
-  identity="$(signing_identity)"
-  [[ -f "$UPDATER_PUB" ]] || die "ko/updater.pub missing; run '$0 setup' first"
-  xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null \
-    || die "notarytool keychain profile '$NOTARY_PROFILE' missing"
+  cmd_setup >/dev/null
   TAURI_SIGNING_PRIVATE_KEY="$(updater_secret_field value)" \
     || die "cannot decrypt $UPDATER_SECRET; run '$0 setup' first"
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(updater_secret_field password)" \
@@ -146,7 +119,7 @@ cmd_build() {
 
   # Version is patched only for this build and restored afterwards.
   local restore=(desktop/package.json desktop/src-tauri/tauri.conf.json desktop/src-tauri/Cargo.toml desktop/src-tauri/Cargo.lock)
-  trap 'git checkout -- "${restore[@]}" 2>/dev/null || true' EXIT
+  trap 'git checkout -- "${restore[@]}" 2>/dev/null || true; cleanup_keys' EXIT
   (cd desktop && node scripts/set-version-from-tag.mjs "$version")
 
   config="$(mktemp "${TMPDIR:-/tmp}/buzz-ko-config.XXXXXX")"
@@ -194,16 +167,17 @@ cmd_build() {
   /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $product" "$app/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleName $product" "$app/Contents/Info.plist"
 
-  # Sign nested executables first, then the bundle, all with hardened runtime.
-  while IFS= read -r -d '' bin; do
-    codesign --force --timestamp --options runtime \
-      --entitlements desktop/src-tauri/Entitlements.plist \
-      --sign "$identity" "$bin"
-  done < <(find "$app/Contents/MacOS" "$app/Contents/Frameworks" "$app/Contents/Resources" \
-             -type f \( -perm -u+x -o -name '*.dylib' \) -print0 2>/dev/null)
-  codesign --force --timestamp --options runtime \
-    --entitlements desktop/src-tauri/Entitlements.plist \
-    --sign "$identity" "$app"
+  keys="$(private_dir)"
+  ( umask 077
+    secret_field "$SIGNING_SECRET" private_key_pem >"$keys/signing-key.pem"
+    secret_field "$SIGNING_SECRET" certificate_pem >"$keys/signing-cert.pem"
+    secret_field "$NOTARY_SECRET" p8 >"$keys/notary.p8" )
+
+  # rcodesign signs nested Mach-O code inside-out, with hardened runtime and a
+  # secure timestamp; entitlements go on the main executable.
+  rcodesign sign --for-notarization --code-signature-flags runtime \
+    --pem-file "$keys/signing-key.pem" --pem-file "$keys/signing-cert.pem" \
+    --entitlements-xml-file desktop/src-tauri/Entitlements.plist "$app"
   codesign --verify --deep --strict --verbose=2 "$app"
   desktop/scripts/verify-macos-entitlements.sh "$app"
 
@@ -211,10 +185,14 @@ cmd_build() {
   rm -rf "$DIST" && mkdir -p "$DIST"
   dmg="$DIST/Buzz_KO_${version}_${arch}.dmg"
   VOL_NAME="$product" desktop/scripts/package-macos-dmg.sh "$app" "$dmg"
-  codesign --force --timestamp --sign "$identity" "$dmg"
+  rcodesign sign --pem-file "$keys/signing-key.pem" --pem-file "$keys/signing-cert.pem" "$dmg"
 
   echo "Notarizing (this can take several minutes)…"
-  xcrun notarytool submit "$dmg" --keychain-profile "$NOTARY_PROFILE" --wait
+  xcrun notarytool submit "$dmg" --wait \
+    --key "$keys/notary.p8" \
+    --key-id "$(secret_field "$NOTARY_SECRET" key_id)" \
+    --issuer "$(secret_field "$NOTARY_SECRET" issuer_id)"
+  cleanup_keys; KEY_DIR=""
   xcrun stapler staple "$dmg"
   # Staple the app too, so the updater archive passes Gatekeeper offline.
   xcrun stapler staple "$app"
